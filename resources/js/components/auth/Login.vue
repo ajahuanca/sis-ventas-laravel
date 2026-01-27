@@ -1,62 +1,78 @@
 <template>
-    <div class="login-container">
-        <div class="login-card shadow-lg">
-            <div class="login-header">
-                <div class="logo-circle">
-                    <i class="fas fa-boxes"></i>
-                </div>
-                <h3>Sistema de Ventas</h3>
-                <p class="text-muted">Ingresa tus credenciales para continuar</p>
-            </div>
-            
-            <form @submit.prevent="login">
-                <div class="mb-3">
-                    <label class="form-label">Correo Electrónico</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="fas fa-envelope text-muted"></i>
-                        </span>
-                        <input 
-                            type="email" 
-                            class="form-control border-start-0 ps-0" 
-                            v-model="credentials.email" 
-                            required
-                            placeholder="ejemplo@correo.com">
-                    </div>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="form-label">Contraseña</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="fas fa-lock text-muted"></i>
-                        </span>
-                        <input 
-                            type="password" 
-                            class="form-control border-start-0 ps-0" 
-                            v-model="credentials.password" 
-                            required
-                            placeholder="••••••••">
-                    </div>
-                </div>
-
-                <div v-if="error" class="alert alert-danger py-2 mb-4 fs-7">
-                    <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
-                </div>
-
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary btn-lg gradiente-btn" :disabled="loading">
-                        <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        {{ loading ? 'Ingresando...' : 'Iniciar Sesión' }}
-                    </button>
-                </div>
-            </form>
-
-            <div class="login-footer mt-4 text-center">
-                <small class="text-muted">© {{ new Date().getFullYear() }} Sistema de Gestión</small>
-            </div>
+  <div class="login-container">
+    <div class="login-card shadow-lg">
+      <div class="login-header">
+        <div class="logo-circle">
+          <i class="fas fa-boxes" />
         </div>
+        <h3>Sistema de Ventas</h3>
+        <p class="text-muted">
+          Ingresa tus credenciales para continuar
+        </p>
+      </div>
+            
+      <form @submit.prevent="login">
+        <div class="mb-3">
+          <label class="form-label">Correo Electrónico</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0">
+              <i class="fas fa-envelope text-muted" />
+            </span>
+            <input 
+              v-model="credentials.email" 
+              type="email" 
+              class="form-control border-start-0 ps-0" 
+              required
+              placeholder="ejemplo@correo.com"
+            >
+          </div>
+        </div>
+                
+        <div class="mb-4">
+          <label class="form-label">Contraseña</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0">
+              <i class="fas fa-lock text-muted" />
+            </span>
+            <input 
+              v-model="credentials.password" 
+              type="password" 
+              class="form-control border-start-0 ps-0" 
+              required
+              placeholder="••••••••"
+            >
+          </div>
+        </div>
+
+        <div
+          v-if="error"
+          class="alert alert-danger py-2 mb-4 fs-7"
+        >
+          <i class="fas fa-exclamation-circle me-2" />{{ error }}
+        </div>
+
+        <div class="d-grid gap-2">
+          <button
+            type="submit"
+            class="btn btn-primary btn-lg gradiente-btn"
+            :disabled="loading"
+          >
+            <span
+              v-if="loading"
+              class="spinner-border spinner-border-sm me-2"
+              role="status"
+              aria-hidden="true"
+            />
+            {{ loading ? 'Ingresando...' : 'Iniciar Sesión' }}
+          </button>
+        </div>
+      </form>
+
+      <div class="login-footer mt-4 text-center">
+        <small class="text-muted">© {{ new Date().getFullYear() }} Sistema de Gestión</small>
+      </div>
     </div>
+  </div>
 </template>
 
 <script setup>
@@ -107,7 +123,7 @@ const login = async () => {
         } else {
             error.value = 'Error de conexión. Inténtalo más tarde.';
         }
-        console.error(err);
+        //console.error(err);
     } finally {
         loading.value = false;
     }

@@ -1,477 +1,656 @@
 <template>
-    <div class="venta-module">
-        <!-- Vista de Tabla -->
-        <div v-show="!mostrarFormulario" class="fade-in">
-            <!-- Header con botones y filtros -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-4">
-                            <h5 class="mb-0">
-                                <i class="fas fa-cash-register text-success me-2"></i>
-                                Gestión de Ventas
-                            </h5>
-                            <small class="text-muted">Administra las ventas a clientes</small>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="d-flex justify-content-end gap-2 flex-wrap">
-                                <select class="form-select form-select-sm" style="width: 150px;" v-model="filtros.estado" @change="aplicarFiltros">
-                                    <option value="">Todos los estados</option>
-                                    <option value="Pendiente">Pendiente</option>
-                                    <option value="Completada">Completada</option>
-                                    <option value="Anulada">Anulada</option>
-                                </select>
-                                <button class="btn btn-outline-info btn-sm" @click="cargarDatos">
-                                    <i class="fas fa-sync-alt me-1"></i>Actualizar
-                                </button>
-                                <button class="btn btn-success" @click="nuevoRegistro">
-                                    <i class="fas fa-plus me-2"></i>Nueva Venta
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  <div class="venta-module">
+    <!-- Vista de Tabla -->
+    <div
+      v-show="!mostrarFormulario"
+      class="fade-in"
+    >
+      <!-- Header con botones y filtros -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-4">
+              <h5 class="mb-0">
+                <i class="fas fa-cash-register text-success me-2" />
+                Gestión de Ventas
+              </h5>
+              <small class="text-muted">Administra las ventas a clientes</small>
             </div>
-
-            <!-- Tabla de Ventas -->
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <table id="tablaVentas" class="table table-hover table-striped w-100">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Código</th>
-                                <th>Cliente</th>
-                                <th>Fecha</th>
-                                <th>Tipo</th>
-                                <th>Comprobante</th>
-                                <th>Total</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
+            <div class="col-md-8">
+              <div class="d-flex justify-content-end gap-2 flex-wrap">
+                <select
+                  v-model="filtros.estado"
+                  class="form-select form-select-sm"
+                  style="width: 150px;"
+                  @change="aplicarFiltros"
+                >
+                  <option value="">
+                    Todos los estados
+                  </option>
+                  <option value="Pendiente">
+                    Pendiente
+                  </option>
+                  <option value="Completada">
+                    Completada
+                  </option>
+                  <option value="Anulada">
+                    Anulada
+                  </option>
+                </select>
+                <button
+                  class="btn btn-outline-info btn-sm"
+                  @click="cargarDatos"
+                >
+                  <i class="fas fa-sync-alt me-1" />Actualizar
+                </button>
+                <button
+                  class="btn btn-success"
+                  @click="nuevoRegistro"
+                >
+                  <i class="fas fa-plus me-2" />Nueva Venta
+                </button>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
 
-        <!-- Vista de Formulario -->
-        <div v-show="mostrarFormulario" class="fade-in">
-            <div class="card shadow-sm">
-                <div class="card-header bg-success text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i :class="modoEdicion ? 'fas fa-edit' : 'fas fa-plus'" class="me-2"></i>
-                            {{ modoEdicion ? 'Editar Venta' : 'Nueva Venta' }}
-                        </h5>
-                        <button class="btn btn-light btn-sm" @click="cancelarFormulario">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <form @submit.prevent="guardarVenta">
-                        <!-- Sección: Datos del Cliente y Venta -->
-                        <div class="card mb-4">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-user me-2"></i>Datos de la Venta
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <!-- Código -->
-                                    <div class="col-md-2 mb-3">
-                                        <label class="form-label">Código</label>
-                                        <input type="text" class="form-control bg-light" v-model="formulario.codigo" readonly>
-                                    </div>
-
-                                    <!-- Cliente -->
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label">
-                                            Cliente <span class="text-danger">*</span>
-                                        </label>
-                                        <select 
-                                            class="form-select" 
-                                            :class="{ 'is-invalid': errores.cliente_id }"
-                                            v-model="formulario.cliente_id"
-                                            @change="onClienteChange"
-                                        >
-                                            <option value="">Seleccione un cliente</option>
-                                            <option 
-                                                v-for="cliente in clientes" 
-                                                :key="cliente.id" 
-                                                :value="cliente.id"
-                                            >
-                                                {{ cliente.codigo }} - {{ cliente.nombre }}
-                                            </option>
-                                        </select>
-                                        <div class="invalid-feedback" v-if="errores.cliente_id">
-                                            {{ errores.cliente_id[0] }}
-                                        </div>
-                                        <small class="text-muted" v-if="clienteSeleccionado">
-                                            Crédito disponible: Bs. {{ clienteSeleccionado.credito_disponible?.toLocaleString() }}
-                                            | Días crédito: {{ clienteSeleccionado.dias_credito }}
-                                        </small>
-                                    </div>
-
-                                    <!-- Tipo Venta -->
-                                    <div class="col-md-2 mb-3">
-                                        <label class="form-label">
-                                            Tipo Venta <span class="text-danger">*</span>
-                                        </label>
-                                        <select 
-                                            class="form-select"
-                                            :class="{ 'is-invalid': errores.tipo_venta }"
-                                            v-model="formulario.tipo_venta"
-                                            @change="onTipoVentaChange"
-                                        >
-                                            <option value="Contado">Contado</option>
-                                            <option value="Credito">Crédito</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- Tipo Comprobante -->
-                                    <div class="col-md-2 mb-3">
-                                        <label class="form-label">
-                                            Comprobante <span class="text-danger">*</span>
-                                        </label>
-                                        <select 
-                                            class="form-select"
-                                            v-model="formulario.tipo_comprobante"
-                                        >
-                                            <option value="Factura">Factura</option>
-                                            <option value="Boleta">Boleta</option>
-                                            <option value="Nota">Nota</option>
-                                            <option value="Otro">Otro</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- Número Comprobante -->
-                                    <div class="col-md-2 mb-3">
-                                        <label class="form-label">N° Comprobante</label>
-                                        <input 
-                                            type="text" 
-                                            class="form-control"
-                                            v-model="formulario.numero_comprobante"
-                                            placeholder="Ej: F001-00123"
-                                            maxlength="100"
-                                        >
-                                    </div>
-
-                                    <!-- Fecha Venta -->
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label">
-                                            Fecha Venta <span class="text-danger">*</span>
-                                        </label>
-                                        <input 
-                                            type="date" 
-                                            class="form-control"
-                                            :class="{ 'is-invalid': errores.fecha_venta }"
-                                            v-model="formulario.fecha_venta"
-                                        >
-                                    </div>
-
-                                    <!-- Fecha Vencimiento -->
-                                    <div class="col-md-3 mb-3" v-show="formulario.tipo_venta === 'Credito'">
-                                        <label class="form-label">Fecha Vencimiento</label>
-                                        <input 
-                                            type="date" 
-                                            class="form-control"
-                                            v-model="formulario.fecha_vencimiento"
-                                        >
-                                    </div>
-
-                                    <!-- Impuesto -->
-                                    <div class="col-md-2 mb-3">
-                                        <label class="form-label">% Impuesto</label>
-                                        <input 
-                                            type="number" 
-                                            step="0.01"
-                                            class="form-control"
-                                            v-model="formulario.porcentaje_impuesto"
-                                            placeholder="0"
-                                            min="0"
-                                            max="100"
-                                            @input="calcularTotales"
-                                        >
-                                    </div>
-
-                                    <!-- Descuento General -->
-                                    <div class="col-md-2 mb-3">
-                                        <label class="form-label">% Descuento</label>
-                                        <input 
-                                            type="number"
-                                            step="0.01"
-                                            class="form-control"
-                                            v-model="formulario.porcentaje_descuento"
-                                            placeholder="0"
-                                            min="0"
-                                            max="100"
-                                            @input="calcularTotales"
-                                        >
-                                    </div>
-
-                                    <!-- Observaciones -->
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Observaciones</label>
-                                        <textarea 
-                                            class="form-control"
-                                            v-model="formulario.observaciones"
-                                            placeholder="Notas adicionales"
-                                            rows="2"
-                                        ></textarea>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Sección: Detalle de Productos -->
-                        <div class="card mb-4">
-                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-boxes me-2"></i>Detalle de Productos
-                                </h6>
-                                <button type="button" class="btn btn-success btn-sm" @click="agregarDetalle">
-                                    <i class="fas fa-plus me-1"></i>Agregar Producto
-                                </button>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-bordered">
-                                        <thead class="table-secondary">
-                                            <tr>
-                                                <th style="width: 40%;">Producto</th>
-                                                <th style="width: 12%;">Cantidad</th>
-                                                <th style="width: 15%;">Precio Unit.</th>
-                                                <th style="width: 10%;">% Desc.</th>
-                                                <th style="width: 15%;">Subtotal</th>
-                                                <th style="width: 8%;"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr v-for="(detalle, index) in formulario.detalles" :key="index">
-                                                <td>
-                                                    <select 
-                                                        class="form-select form-select-sm"
-                                                        v-model="detalle.producto_id"
-                                                        @change="onProductoChange(index)"
-                                                    >
-                                                        <option value="">Seleccione producto</option>
-                                                        <option 
-                                                            v-for="producto in productos" 
-                                                            :key="producto.id" 
-                                                            :value="producto.id"
-                                                        >
-                                                            {{ producto.codigo }} - {{ producto.nombre }}
-                                                        </option>
-                                                    </select>
-                                                    <small class="text-muted" v-if="detalle.producto_id">
-                                                        Stock: {{ getProductoById(detalle.producto_id)?.stock }}
-                                                    </small>
-                                                </td>
-                                                <td>
-                                                    <input 
-                                                        type="number" 
-                                                        class="form-control form-control-sm"
-                                                        :class="{ 'is-invalid': detalle.cantidad > (getProductoById(detalle.producto_id)?.stock || 0) }"
-                                                        v-model.number="detalle.cantidad"
-                                                        min="1"
-                                                        @input="calcularSubtotalDetalle(index)"
-                                                    >
-                                                    <small class="text-danger" v-if="detalle.producto_id && detalle.cantidad > (getProductoById(detalle.producto_id)?.stock || 0)">
-                                                        Stock insuficiente
-                                                    </small>
-                                                </td>
-                                                <td>
-                                                    <div class="input-group input-group-sm">
-                                                        <span class="input-group-text">Bs.</span>
-                                                        <input 
-                                                            type="number" 
-                                                            step="0.01"
-                                                            class="form-control form-control-sm"
-                                                            v-model.number="detalle.precio_unitario"
-                                                            min="0"
-                                                            @input="calcularSubtotalDetalle(index)"
-                                                        >
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <input 
-                                                        type="number" 
-                                                        step="0.01"
-                                                        class="form-control form-control-sm"
-                                                        v-model.number="detalle.porcentaje_descuento"
-                                                        min="0"
-                                                        max="100"
-                                                        @input="calcularSubtotalDetalle(index)"
-                                                    >
-                                                </td>
-                                                <td class="text-end">
-                                                    <strong>Bs. {{ detalle.subtotal?.toFixed(2) || '0.00' }}</strong>
-                                                </td>
-                                                <td class="text-center">
-                                                    <button 
-                                                        type="button" 
-                                                        class="btn btn-danger btn-sm"
-                                                        @click="eliminarDetalle(index)"
-                                                        :disabled="formulario.detalles.length === 1"
-                                                    >
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr v-if="formulario.detalles.length === 0">
-                                                <td colspan="6" class="text-center text-muted py-4">
-                                                    <i class="fas fa-box-open fa-2x mb-2"></i>
-                                                    <p class="mb-0">No hay productos agregados</p>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                <div class="alert alert-danger py-2" v-if="errores.detalles">
-                                    <i class="fas fa-exclamation-circle me-2"></i>
-                                    {{ errores.detalles[0] }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Sección: Totales -->
-                        <div class="card mb-4">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-calculator me-2"></i>Resumen de Totales
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row justify-content-end">
-                                    <div class="col-md-4">
-                                        <table class="table table-sm">
-                                            <tbody>
-                                                <tr>
-                                                    <td class="text-end">Subtotal:</td>
-                                                    <td class="text-end" style="width: 120px;">
-                                                        <strong>Bs. {{ totales.subtotal.toFixed(2) }}</strong>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-end">Descuento ({{ formulario.porcentaje_descuento || 0 }}%):</td>
-                                                    <td class="text-end text-danger">
-                                                        -Bs. {{ totales.descuento.toFixed(2) }}
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-end">Impuesto ({{ formulario.porcentaje_impuesto || 0 }}%):</td>
-                                                    <td class="text-end">
-                                                        Bs. {{ totales.impuesto.toFixed(2) }}
-                                                    </td>
-                                                </tr>
-                                                <tr class="table-success">
-                                                    <td class="text-end"><strong>TOTAL:</strong></td>
-                                                    <td class="text-end">
-                                                        <strong class="fs-5">Bs. {{ totales.total.toFixed(2) }}</strong>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Botones -->
-                        <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-secondary" @click="cancelarFormulario">
-                                <i class="fas fa-times me-2"></i>Cancelar
-                            </button>
-                            <button type="submit" class="btn btn-success" :disabled="guardando">
-                                <i class="fas fa-save me-2"></i>
-                                {{ guardando ? 'Guardando...' : 'Guardar Venta' }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+      <!-- Tabla de Ventas -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <table
+            id="tablaVentas"
+            class="table table-hover table-striped w-100"
+          >
+            <thead class="table-dark">
+              <tr>
+                <th>Código</th>
+                <th>Cliente</th>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Comprobante</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody />
+          </table>
         </div>
-
-        <!-- Modal Ver Detalle -->
-        <div class="modal fade" id="modalDetalleVenta" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header bg-success text-white">
-                        <h5 class="modal-title">
-                            <i class="fas fa-eye me-2"></i>Detalle de Venta
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body" v-if="ventaDetalle">
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <p><strong>Código:</strong> {{ ventaDetalle.codigo }}</p>
-                                <p><strong>Cliente:</strong> {{ ventaDetalle.cliente?.persona?.razon_social || ventaDetalle.cliente?.persona?.nombres }}</p>
-                                <p><strong>Fecha:</strong> {{ formatDate(ventaDetalle.fecha_venta) }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p><strong>Tipo:</strong> {{ ventaDetalle.tipo_venta }}</p>
-                                <p><strong>Comprobante:</strong> {{ ventaDetalle.tipo_comprobante }} {{ ventaDetalle.numero_comprobante }}</p>
-                                <p>
-                                    <strong>Estado:</strong> 
-                                    <span :class="getEstadoBadgeClass(ventaDetalle.estado)">{{ ventaDetalle.estado }}</span>
-                                </p>
-                            </div>
-                        </div>
-
-                        <table class="table table-sm table-bordered">
-                            <thead class="table-secondary">
-                                <tr>
-                                    <th>Producto</th>
-                                    <th class="text-center">Cantidad</th>
-                                    <th class="text-end">P. Unitario</th>
-                                    <th class="text-end">Subtotal</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="detalle in ventaDetalle.detalles" :key="detalle.id">
-                                    <td>{{ detalle.producto?.nombre }}</td>
-                                    <td class="text-center">{{ detalle.cantidad }}</td>
-                                    <td class="text-end">Bs. {{ parseFloat(detalle.precio_unitario).toFixed(2) }}</td>
-                                    <td class="text-end">Bs. {{ parseFloat(detalle.subtotal).toFixed(2) }}</td>
-                                </tr>
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td colspan="3" class="text-end">Subtotal:</td>
-                                    <td class="text-end">Bs. {{ parseFloat(ventaDetalle.subtotal).toFixed(2) }}</td>
-                                </tr>
-                                <tr>
-                                    <td colspan="3" class="text-end">Descuento:</td>
-                                    <td class="text-end text-danger">-Bs. {{ parseFloat(ventaDetalle.descuento).toFixed(2) }}</td>
-                                </tr>
-                                <tr>
-                                    <td colspan="3" class="text-end">Impuesto:</td>
-                                    <td class="text-end">Bs. {{ parseFloat(ventaDetalle.impuesto).toFixed(2) }}</td>
-                                </tr>
-                                <tr class="table-success">
-                                    <td colspan="3" class="text-end"><strong>TOTAL:</strong></td>
-                                    <td class="text-end"><strong>Bs. {{ parseFloat(ventaDetalle.total).toFixed(2) }}</strong></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-
-                        <div v-if="ventaDetalle.observaciones" class="mt-3">
-                            <strong>Observaciones:</strong>
-                            <p class="text-muted mb-0">{{ ventaDetalle.observaciones }}</p>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
+
+    <!-- Vista de Formulario -->
+    <div
+      v-show="mostrarFormulario"
+      class="fade-in"
+    >
+      <div class="card shadow-sm">
+        <div class="card-header bg-success text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i
+                :class="modoEdicion ? 'fas fa-edit' : 'fas fa-plus'"
+                class="me-2"
+              />
+              {{ modoEdicion ? 'Editar Venta' : 'Nueva Venta' }}
+            </h5>
+            <button
+              class="btn btn-light btn-sm"
+              @click="cancelarFormulario"
+            >
+              <i class="fas fa-times" />
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <form @submit.prevent="guardarVenta">
+            <!-- Sección: Datos del Cliente y Venta -->
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">
+                  <i class="fas fa-user me-2" />Datos de la Venta
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <!-- Código -->
+                  <div class="col-md-2 mb-3">
+                    <label class="form-label">Código</label>
+                    <input
+                      v-model="formulario.codigo"
+                      type="text"
+                      class="form-control bg-light"
+                      readonly
+                    >
+                  </div>
+
+                  <!-- Cliente -->
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">
+                      Cliente <span class="text-danger">*</span>
+                    </label>
+                    <select 
+                      v-model="formulario.cliente_id" 
+                      class="form-select"
+                      :class="{ 'is-invalid': errores.cliente_id }"
+                      @change="onClienteChange"
+                    >
+                      <option value="">
+                        Seleccione un cliente
+                      </option>
+                      <option 
+                        v-for="cliente in clientes" 
+                        :key="cliente.id" 
+                        :value="cliente.id"
+                      >
+                        {{ cliente.codigo }} - {{ cliente.nombre }}
+                      </option>
+                    </select>
+                    <div
+                      v-if="errores.cliente_id"
+                      class="invalid-feedback"
+                    >
+                      {{ errores.cliente_id[0] }}
+                    </div>
+                    <small
+                      v-if="clienteSeleccionado"
+                      class="text-muted"
+                    >
+                      Crédito disponible: Bs. {{ clienteSeleccionado.credito_disponible?.toLocaleString() }}
+                      | Días crédito: {{ clienteSeleccionado.dias_credito }}
+                    </small>
+                  </div>
+
+                  <!-- Tipo Venta -->
+                  <div class="col-md-2 mb-3">
+                    <label class="form-label">
+                      Tipo Venta <span class="text-danger">*</span>
+                    </label>
+                    <select 
+                      v-model="formulario.tipo_venta"
+                      class="form-select"
+                      :class="{ 'is-invalid': errores.tipo_venta }"
+                      @change="onTipoVentaChange"
+                    >
+                      <option value="Contado">
+                        Contado
+                      </option>
+                      <option value="Credito">
+                        Crédito
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Tipo Comprobante -->
+                  <div class="col-md-2 mb-3">
+                    <label class="form-label">
+                      Comprobante <span class="text-danger">*</span>
+                    </label>
+                    <select 
+                      v-model="formulario.tipo_comprobante"
+                      class="form-select"
+                    >
+                      <option value="Factura">
+                        Factura
+                      </option>
+                      <option value="Boleta">
+                        Boleta
+                      </option>
+                      <option value="Nota">
+                        Nota
+                      </option>
+                      <option value="Otro">
+                        Otro
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Número Comprobante -->
+                  <div class="col-md-2 mb-3">
+                    <label class="form-label">N° Comprobante</label>
+                    <input 
+                      v-model="formulario.numero_comprobante" 
+                      type="text"
+                      class="form-control"
+                      placeholder="Ej: F001-00123"
+                      maxlength="100"
+                    >
+                  </div>
+
+                  <!-- Fecha Venta -->
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">
+                      Fecha Venta <span class="text-danger">*</span>
+                    </label>
+                    <input 
+                      v-model="formulario.fecha_venta" 
+                      type="date"
+                      class="form-control"
+                      :class="{ 'is-invalid': errores.fecha_venta }"
+                    >
+                  </div>
+
+                  <!-- Fecha Vencimiento -->
+                  <div
+                    v-show="formulario.tipo_venta === 'Credito'"
+                    class="col-md-3 mb-3"
+                  >
+                    <label class="form-label">Fecha Vencimiento</label>
+                    <input 
+                      v-model="formulario.fecha_vencimiento" 
+                      type="date"
+                      class="form-control"
+                    >
+                  </div>
+
+                  <!-- Impuesto -->
+                  <div class="col-md-2 mb-3">
+                    <label class="form-label">% Impuesto</label>
+                    <input 
+                      v-model="formulario.porcentaje_impuesto" 
+                      type="number"
+                      step="0.01"
+                      class="form-control"
+                      placeholder="0"
+                      min="0"
+                      max="100"
+                      @input="calcularTotales"
+                    >
+                  </div>
+
+                  <!-- Descuento General -->
+                  <div class="col-md-2 mb-3">
+                    <label class="form-label">% Descuento</label>
+                    <input 
+                      v-model="formulario.porcentaje_descuento"
+                      type="number"
+                      step="0.01"
+                      class="form-control"
+                      placeholder="0"
+                      min="0"
+                      max="100"
+                      @input="calcularTotales"
+                    >
+                  </div>
+
+                  <!-- Observaciones -->
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Observaciones</label>
+                    <textarea 
+                      v-model="formulario.observaciones"
+                      class="form-control"
+                      placeholder="Notas adicionales"
+                      rows="2"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sección: Detalle de Productos -->
+            <div class="card mb-4">
+              <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                  <i class="fas fa-boxes me-2" />Detalle de Productos
+                </h6>
+                <button
+                  type="button"
+                  class="btn btn-success btn-sm"
+                  @click="agregarDetalle"
+                >
+                  <i class="fas fa-plus me-1" />Agregar Producto
+                </button>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-bordered">
+                    <thead class="table-secondary">
+                      <tr>
+                        <th style="width: 40%;">
+                          Producto
+                        </th>
+                        <th style="width: 12%;">
+                          Cantidad
+                        </th>
+                        <th style="width: 15%;">
+                          Precio Unit.
+                        </th>
+                        <th style="width: 10%;">
+                          % Desc.
+                        </th>
+                        <th style="width: 15%;">
+                          Subtotal
+                        </th>
+                        <th style="width: 8%;" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="(detalle, index) in formulario.detalles"
+                        :key="index"
+                      >
+                        <td>
+                          <select 
+                            v-model="detalle.producto_id"
+                            class="form-select form-select-sm"
+                            @change="onProductoChange(index)"
+                          >
+                            <option value="">
+                              Seleccione producto
+                            </option>
+                            <option 
+                              v-for="producto in productos" 
+                              :key="producto.id" 
+                              :value="producto.id"
+                            >
+                              {{ producto.codigo }} - {{ producto.nombre }}
+                            </option>
+                          </select>
+                          <small
+                            v-if="detalle.producto_id"
+                            class="text-muted"
+                          >
+                            Stock: {{ getProductoById(detalle.producto_id)?.stock }}
+                          </small>
+                        </td>
+                        <td>
+                          <input 
+                            v-model.number="detalle.cantidad" 
+                            type="number"
+                            class="form-control form-control-sm"
+                            :class="{ 'is-invalid': detalle.cantidad > (getProductoById(detalle.producto_id)?.stock || 0) }"
+                            min="1"
+                            @input="calcularSubtotalDetalle(index)"
+                          >
+                          <small
+                            v-if="detalle.producto_id && detalle.cantidad > (getProductoById(detalle.producto_id)?.stock || 0)"
+                            class="text-danger"
+                          >
+                            Stock insuficiente
+                          </small>
+                        </td>
+                        <td>
+                          <div class="input-group input-group-sm">
+                            <span class="input-group-text">Bs.</span>
+                            <input 
+                              v-model.number="detalle.precio_unitario" 
+                              type="number"
+                              step="0.01"
+                              class="form-control form-control-sm"
+                              min="0"
+                              @input="calcularSubtotalDetalle(index)"
+                            >
+                          </div>
+                        </td>
+                        <td>
+                          <input 
+                            v-model.number="detalle.porcentaje_descuento" 
+                            type="number"
+                            step="0.01"
+                            class="form-control form-control-sm"
+                            min="0"
+                            max="100"
+                            @input="calcularSubtotalDetalle(index)"
+                          >
+                        </td>
+                        <td class="text-end">
+                          <strong>Bs. {{ detalle.subtotal?.toFixed(2) || '0.00' }}</strong>
+                        </td>
+                        <td class="text-center">
+                          <button 
+                            type="button" 
+                            class="btn btn-danger btn-sm"
+                            :disabled="formulario.detalles.length === 1"
+                            @click="eliminarDetalle(index)"
+                          >
+                            <i class="fas fa-trash" />
+                          </button>
+                        </td>
+                      </tr>
+                      <tr v-if="formulario.detalles.length === 0">
+                        <td
+                          colspan="6"
+                          class="text-center text-muted py-4"
+                        >
+                          <i class="fas fa-box-open fa-2x mb-2" />
+                          <p class="mb-0">
+                            No hay productos agregados
+                          </p>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div
+                  v-if="errores.detalles"
+                  class="alert alert-danger py-2"
+                >
+                  <i class="fas fa-exclamation-circle me-2" />
+                  {{ errores.detalles[0] }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Sección: Totales -->
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">
+                  <i class="fas fa-calculator me-2" />Resumen de Totales
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="row justify-content-end">
+                  <div class="col-md-4">
+                    <table class="table table-sm">
+                      <tbody>
+                        <tr>
+                          <td class="text-end">
+                            Subtotal:
+                          </td>
+                          <td
+                            class="text-end"
+                            style="width: 120px;"
+                          >
+                            <strong>Bs. {{ totales.subtotal.toFixed(2) }}</strong>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td class="text-end">
+                            Descuento ({{ formulario.porcentaje_descuento || 0 }}%):
+                          </td>
+                          <td class="text-end text-danger">
+                            -Bs. {{ totales.descuento.toFixed(2) }}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td class="text-end">
+                            Impuesto ({{ formulario.porcentaje_impuesto || 0 }}%):
+                          </td>
+                          <td class="text-end">
+                            Bs. {{ totales.impuesto.toFixed(2) }}
+                          </td>
+                        </tr>
+                        <tr class="table-success">
+                          <td class="text-end">
+                            <strong>TOTAL:</strong>
+                          </td>
+                          <td class="text-end">
+                            <strong class="fs-5">Bs. {{ totales.total.toFixed(2) }}</strong>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex justify-content-end gap-2">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                @click="cancelarFormulario"
+              >
+                <i class="fas fa-times me-2" />Cancelar
+              </button>
+              <button
+                type="submit"
+                class="btn btn-success"
+                :disabled="guardando"
+              >
+                <i class="fas fa-save me-2" />
+                {{ guardando ? 'Guardando...' : 'Guardar Venta' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Ver Detalle -->
+    <div
+      id="modalDetalleVenta"
+      class="modal fade"
+      tabindex="-1"
+    >
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-eye me-2" />Detalle de Venta
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            />
+          </div>
+          <div
+            v-if="ventaDetalle"
+            class="modal-body"
+          >
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <p><strong>Código:</strong> {{ ventaDetalle.codigo }}</p>
+                <p><strong>Cliente:</strong> {{ ventaDetalle.cliente?.persona?.razon_social || ventaDetalle.cliente?.persona?.nombres }}</p>
+                <p><strong>Fecha:</strong> {{ formatDate(ventaDetalle.fecha_venta) }}</p>
+              </div>
+              <div class="col-md-6">
+                <p><strong>Tipo:</strong> {{ ventaDetalle.tipo_venta }}</p>
+                <p><strong>Comprobante:</strong> {{ ventaDetalle.tipo_comprobante }} {{ ventaDetalle.numero_comprobante }}</p>
+                <p>
+                  <strong>Estado:</strong> 
+                  <span :class="getEstadoBadgeClass(ventaDetalle.estado)">{{ ventaDetalle.estado }}</span>
+                </p>
+              </div>
+            </div>
+
+            <table class="table table-sm table-bordered">
+              <thead class="table-secondary">
+                <tr>
+                  <th>Producto</th>
+                  <th class="text-center">
+                    Cantidad
+                  </th>
+                  <th class="text-end">
+                    P. Unitario
+                  </th>
+                  <th class="text-end">
+                    Subtotal
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="detalle in ventaDetalle.detalles"
+                  :key="detalle.id"
+                >
+                  <td>{{ detalle.producto?.nombre }}</td>
+                  <td class="text-center">
+                    {{ detalle.cantidad }}
+                  </td>
+                  <td class="text-end">
+                    Bs. {{ parseFloat(detalle.precio_unitario).toFixed(2) }}
+                  </td>
+                  <td class="text-end">
+                    Bs. {{ parseFloat(detalle.subtotal).toFixed(2) }}
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td
+                    colspan="3"
+                    class="text-end"
+                  >
+                    Subtotal:
+                  </td>
+                  <td class="text-end">
+                    Bs. {{ parseFloat(ventaDetalle.subtotal).toFixed(2) }}
+                  </td>
+                </tr>
+                <tr>
+                  <td
+                    colspan="3"
+                    class="text-end"
+                  >
+                    Descuento:
+                  </td>
+                  <td class="text-end text-danger">
+                    -Bs. {{ parseFloat(ventaDetalle.descuento).toFixed(2) }}
+                  </td>
+                </tr>
+                <tr>
+                  <td
+                    colspan="3"
+                    class="text-end"
+                  >
+                    Impuesto:
+                  </td>
+                  <td class="text-end">
+                    Bs. {{ parseFloat(ventaDetalle.impuesto).toFixed(2) }}
+                  </td>
+                </tr>
+                <tr class="table-success">
+                  <td
+                    colspan="3"
+                    class="text-end"
+                  >
+                    <strong>TOTAL:</strong>
+                  </td>
+                  <td class="text-end">
+                    <strong>Bs. {{ parseFloat(ventaDetalle.total).toFixed(2) }}</strong>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <div
+              v-if="ventaDetalle.observaciones"
+              class="mt-3"
+            >
+              <strong>Observaciones:</strong>
+              <p class="text-muted mb-0">
+                {{ ventaDetalle.observaciones }}
+              </p>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -569,7 +748,7 @@ const cargarClientes = async () => {
             clientes.value = response.data.data;
         }
     } catch (error) {
-        console.error('Error al cargar clientes:', error);
+        //console.error('Error al cargar clientes:', error);
     }
 };
 
@@ -580,7 +759,7 @@ const cargarProductos = async () => {
             productos.value = response.data.data;
         }
     } catch (error) {
-        console.error('Error al cargar productos:', error);
+        //console.error('Error al cargar productos:', error);
     }
 };
 
@@ -746,7 +925,7 @@ const nuevoRegistro = async () => {
             formulario.value.codigo = response.data.data.codigo;
         }
     } catch (error) {
-        console.error('Error al generar código:', error);
+        //console.error('Error al generar código:', error);
     }
 };
 
@@ -805,7 +984,7 @@ const verVenta = async (id) => {
             modalDetalleInstance.value.show();
         }
     } catch (error) {
-        console.error('Error al cargar detalle:', error);
+        //console.error('Error al cargar detalle:', error);
     }
 };
 

@@ -1,117 +1,149 @@
 <template>
-    <div class="categoria-module">
-        <!-- Vista de Tabla -->
-        <div v-show="!mostrarFormulario" class="fade-in">
-            <!-- Header con botón nuevo -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-0">
-                                <i class="fas fa-tags text-primary me-2"></i>
-                                Gestión de Categorías
-                            </h5>
-                            <small class="text-muted">Administra las categorías de productos</small>
-                        </div>
-                        <button class="btn btn-primary" @click="nuevoRegistro">
-                            <i class="fas fa-plus me-2"></i>Nueva Categoría
-                        </button>
-                    </div>
-                </div>
+  <div class="categoria-module">
+    <!-- Vista de Tabla -->
+    <div
+      v-show="!mostrarFormulario"
+      class="fade-in"
+    >
+      <!-- Header con botón nuevo -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-0">
+                <i class="fas fa-tags text-primary me-2" />
+                Gestión de Categorías
+              </h5>
+              <small class="text-muted">Administra las categorías de productos</small>
             </div>
-
-            <!-- Tabla de Categorías -->
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <table id="tablaCategorias" class="table table-hover table-striped w-100">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>ID</th>
-                                <th>Nombre</th>
-                                <th>Descripción</th>
-                                <th>Estado</th>
-                                <th>Fecha Creación</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- DataTable cargará los datos aquí -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <button
+              class="btn btn-primary"
+              @click="nuevoRegistro"
+            >
+              <i class="fas fa-plus me-2" />Nueva Categoría
+            </button>
+          </div>
         </div>
+      </div>
 
-        <!-- Vista de Formulario -->
-        <div v-show="mostrarFormulario" class="fade-in">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i :class="modoEdicion ? 'fas fa-edit' : 'fas fa-plus'" class="me-2"></i>
-                            {{ modoEdicion ? 'Editar Categoría' : 'Nueva Categoría' }}
-                        </h5>
-                        <button class="btn btn-light btn-sm" @click="cancelarFormulario">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <form @submit.prevent="guardarCategoria">
-                        <div class="row">
-                            <!-- Nombre -->
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">
-                                    Nombre <span class="text-danger">*</span>
-                                </label>
-                                <input 
-                                    type="text" 
-                                    class="form-control" 
-                                    :class="{ 'is-invalid': errores.nombre }"
-                                    v-model="formulario.nombre"
-                                    placeholder="Ej: Electrónicos"
-                                    maxlength="100"
-                                >
-                                <div class="invalid-feedback" v-if="errores.nombre">
-                                    {{ errores.nombre[0] }}
-                                </div>
-                            </div>
-
-                            <!-- Descripción -->
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Descripción</label>
-                                <textarea 
-                                    class="form-control" 
-                                    :class="{ 'is-invalid': errores.descripcion }"
-                                    v-model="formulario.descripcion"
-                                    placeholder="Descripción de la categoría"
-                                    rows="3"
-                                    maxlength="500"
-                                ></textarea>
-                                <div class="invalid-feedback" v-if="errores.descripcion">
-                                    {{ errores.descripcion[0] }}
-                                </div>
-                                <small class="text-muted">
-                                    {{ formulario.descripcion ? formulario.descripcion.length : 0 }}/500 caracteres
-                                </small>
-                            </div>
-                        </div>
-
-                        <!-- Botones -->
-                        <div class="d-flex justify-content-end gap-2 mt-4">
-                            <button type="button" class="btn btn-secondary" @click="cancelarFormulario">
-                                <i class="fas fa-times me-2"></i>Cancelar
-                            </button>
-                            <button type="submit" class="btn btn-primary" :disabled="guardando">
-                                <i class="fas fa-save me-2"></i>
-                                {{ guardando ? 'Guardando...' : 'Guardar' }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+      <!-- Tabla de Categorías -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <table
+            id="tablaCategorias"
+            class="table table-hover table-striped w-100"
+          >
+            <thead class="table-dark">
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Estado</th>
+                <th>Fecha Creación</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- DataTable cargará los datos aquí -->
+            </tbody>
+          </table>
         </div>
+      </div>
     </div>
+
+    <!-- Vista de Formulario -->
+    <div
+      v-show="mostrarFormulario"
+      class="fade-in"
+    >
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i
+                :class="modoEdicion ? 'fas fa-edit' : 'fas fa-plus'"
+                class="me-2"
+              />
+              {{ modoEdicion ? 'Editar Categoría' : 'Nueva Categoría' }}
+            </h5>
+            <button
+              class="btn btn-light btn-sm"
+              @click="cancelarFormulario"
+            >
+              <i class="fas fa-times" />
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <form @submit.prevent="guardarCategoria">
+            <div class="row">
+              <!-- Nombre -->
+              <div class="col-md-6 mb-3">
+                <label class="form-label">
+                  Nombre <span class="text-danger">*</span>
+                </label>
+                <input 
+                  v-model="formulario.nombre" 
+                  type="text" 
+                  class="form-control"
+                  :class="{ 'is-invalid': errores.nombre }"
+                  placeholder="Ej: Electrónicos"
+                  maxlength="100"
+                >
+                <div
+                  v-if="errores.nombre"
+                  class="invalid-feedback"
+                >
+                  {{ errores.nombre[0] }}
+                </div>
+              </div>
+
+              <!-- Descripción -->
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Descripción</label>
+                <textarea 
+                  v-model="formulario.descripcion" 
+                  class="form-control"
+                  :class="{ 'is-invalid': errores.descripcion }"
+                  placeholder="Descripción de la categoría"
+                  rows="3"
+                  maxlength="500"
+                />
+                <div
+                  v-if="errores.descripcion"
+                  class="invalid-feedback"
+                >
+                  {{ errores.descripcion[0] }}
+                </div>
+                <small class="text-muted">
+                  {{ formulario.descripcion ? formulario.descripcion.length : 0 }}/500 caracteres
+                </small>
+              </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                @click="cancelarFormulario"
+              >
+                <i class="fas fa-times me-2" />Cancelar
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                :disabled="guardando"
+              >
+                <i class="fas fa-save me-2" />
+                {{ guardando ? 'Guardando...' : 'Guardar' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -157,7 +189,7 @@ const inicializarDataTable = () => {
                     return [];
                 },
                 error: function(xhr, error, thrown) {
-                    console.error('Error al cargar datos:', error);
+                    //console.error('Error al cargar datos:', error);
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',

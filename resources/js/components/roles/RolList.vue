@@ -1,185 +1,249 @@
 <template>
-    <div class="rol-module">
-        <!-- Vista de Tabla -->
-        <div v-show="!mostrarFormulario" class="fade-in">
-            <!-- Header -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-4">
-                            <h5 class="mb-0">
-                                <i class="fas fa-user-tag text-primary me-2"></i>
-                                Gestión de Roles
-                            </h5>
-                            <small class="text-muted">Administra los roles del sistema</small>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="d-flex justify-content-end gap-2 flex-wrap">
-                                <select class="form-select form-select-sm" style="width: 150px;" v-model="filtros.estado" @change="aplicarFiltros">
-                                    <option value="">Todos</option>
-                                    <option value="true">Activos</option>
-                                    <option value="false">Inactivos</option>
-                                </select>
-                                <button class="btn btn-outline-info btn-sm" @click="cargarDatos">
-                                    <i class="fas fa-sync-alt me-1"></i>Actualizar
-                                </button>
-                                <button class="btn btn-primary" @click="nuevoRegistro">
-                                    <i class="fas fa-plus me-2"></i>Nuevo Rol
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  <div class="rol-module">
+    <!-- Vista de Tabla -->
+    <div
+      v-show="!mostrarFormulario"
+      class="fade-in"
+    >
+      <!-- Header -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-4">
+              <h5 class="mb-0">
+                <i class="fas fa-user-tag text-primary me-2" />
+                Gestión de Roles
+              </h5>
+              <small class="text-muted">Administra los roles del sistema</small>
             </div>
-
-            <!-- Tabla -->
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <table id="tablaRoles" class="table table-hover table-striped w-100">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Código</th>
-                                <th>Nombre</th>
-                                <th>Descripción</th>
-                                <th>Permisos</th>
-                                <th>Usuarios</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
+            <div class="col-md-8">
+              <div class="d-flex justify-content-end gap-2 flex-wrap">
+                <select
+                  v-model="filtros.estado"
+                  class="form-select form-select-sm"
+                  style="width: 150px;"
+                  @change="aplicarFiltros"
+                >
+                  <option value="">
+                    Todos
+                  </option>
+                  <option value="true">
+                    Activos
+                  </option>
+                  <option value="false">
+                    Inactivos
+                  </option>
+                </select>
+                <button
+                  class="btn btn-outline-info btn-sm"
+                  @click="cargarDatos"
+                >
+                  <i class="fas fa-sync-alt me-1" />Actualizar
+                </button>
+                <button
+                  class="btn btn-primary"
+                  @click="nuevoRegistro"
+                >
+                  <i class="fas fa-plus me-2" />Nuevo Rol
+                </button>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
 
-        <!-- Vista de Formulario -->
-        <div v-show="mostrarFormulario" class="fade-in">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i :class="modoEdicion ? 'fas fa-edit' : 'fas fa-plus'" class="me-2"></i>
-                            {{ modoEdicion ? 'Editar Rol' : 'Nuevo Rol' }}
-                        </h5>
-                        <button class="btn btn-light btn-sm" @click="cancelarFormulario">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <form @submit.prevent="guardarRol">
-                        <div class="row">
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label">Código</label>
-                                <input type="text" class="form-control bg-light" v-model="formulario.codigo" readonly>
-                            </div>
-                            <div class="col-md-5 mb-3">
-                                <label class="form-label">
-                                    Nombre <span class="text-danger">*</span>
-                                </label>
-                                <input 
-                                    type="text" 
-                                    class="form-control"
-                                    :class="{ 'is-invalid': errores.nombre }"
-                                    v-model="formulario.nombre"
-                                    placeholder="Ej: Administrador"
-                                    maxlength="100"
-                                >
-                                <div class="invalid-feedback" v-if="errores.nombre">
-                                    {{ errores.nombre[0] }}
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Estado</label>
-                                <select class="form-select" v-model="formulario.estado">
-                                    <option :value="true">Activo</option>
-                                    <option :value="false">Inactivo</option>
-                                </select>
-                            </div>
-                            <div class="col-12 mb-3">
-                                <label class="form-label">Descripción</label>
-                                <textarea 
-                                    class="form-control"
-                                    v-model="formulario.descripcion"
-                                    placeholder="Descripción del rol"
-                                    rows="2"
-                                ></textarea>
-                            </div>
-                        </div>
-
-                        <!-- Sección de Permisos -->
-                        <div class="card mb-4">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-key me-2"></i>Permisos del Rol
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div 
-                                        class="col-md-4 mb-3" 
-                                        v-for="(permisos, modulo) in permisosAgrupados" 
-                                        :key="modulo"
-                                    >
-                                        <div class="card h-100">
-                                            <div class="card-header bg-secondary text-white py-2">
-                                                <div class="form-check">
-                                                    <input 
-                                                        class="form-check-input" 
-                                                        type="checkbox"
-                                                        :id="'modulo-' + modulo"
-                                                        :checked="todosSeleccionados(permisos)"
-                                                        @change="toggleModulo(permisos, $event.target.checked)"
-                                                    >
-                                                    <label class="form-check-label text-capitalize" :for="'modulo-' + modulo">
-                                                        <strong>{{ modulo }}</strong>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div class="card-body p-2">
-                                                <div 
-                                                    class="form-check" 
-                                                    v-for="permiso in permisos" 
-                                                    :key="permiso.id"
-                                                >
-                                                    <input 
-                                                        class="form-check-input" 
-                                                        type="checkbox"
-                                                        :id="'permiso-' + permiso.id"
-                                                        :value="permiso.id"
-                                                        v-model="formulario.permisos"
-                                                    >
-                                                    <label class="form-check-label small" :for="'permiso-' + permiso.id">
-                                                        {{ permiso.nombre }}
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <p class="text-muted small mb-0" v-if="Object.keys(permisosAgrupados).length === 0">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    No hay permisos configurados. Crea permisos desde el módulo de Permisos.
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Botones -->
-                        <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-secondary" @click="cancelarFormulario">
-                                <i class="fas fa-times me-2"></i>Cancelar
-                            </button>
-                            <button type="submit" class="btn btn-primary" :disabled="guardando">
-                                <i class="fas fa-save me-2"></i>
-                                {{ guardando ? 'Guardando...' : 'Guardar Rol' }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+      <!-- Tabla -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <table
+            id="tablaRoles"
+            class="table table-hover table-striped w-100"
+          >
+            <thead class="table-dark">
+              <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Permisos</th>
+                <th>Usuarios</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody />
+          </table>
         </div>
+      </div>
     </div>
+
+    <!-- Vista de Formulario -->
+    <div
+      v-show="mostrarFormulario"
+      class="fade-in"
+    >
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i
+                :class="modoEdicion ? 'fas fa-edit' : 'fas fa-plus'"
+                class="me-2"
+              />
+              {{ modoEdicion ? 'Editar Rol' : 'Nuevo Rol' }}
+            </h5>
+            <button
+              class="btn btn-light btn-sm"
+              @click="cancelarFormulario"
+            >
+              <i class="fas fa-times" />
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <form @submit.prevent="guardarRol">
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Código</label>
+                <input
+                  v-model="formulario.codigo"
+                  type="text"
+                  class="form-control bg-light"
+                  readonly
+                >
+              </div>
+              <div class="col-md-5 mb-3">
+                <label class="form-label">
+                  Nombre <span class="text-danger">*</span>
+                </label>
+                <input 
+                  v-model="formulario.nombre" 
+                  type="text"
+                  class="form-control"
+                  :class="{ 'is-invalid': errores.nombre }"
+                  placeholder="Ej: Administrador"
+                  maxlength="100"
+                >
+                <div
+                  v-if="errores.nombre"
+                  class="invalid-feedback"
+                >
+                  {{ errores.nombre[0] }}
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Estado</label>
+                <select
+                  v-model="formulario.estado"
+                  class="form-select"
+                >
+                  <option :value="true">
+                    Activo
+                  </option>
+                  <option :value="false">
+                    Inactivo
+                  </option>
+                </select>
+              </div>
+              <div class="col-12 mb-3">
+                <label class="form-label">Descripción</label>
+                <textarea 
+                  v-model="formulario.descripcion"
+                  class="form-control"
+                  placeholder="Descripción del rol"
+                  rows="2"
+                />
+              </div>
+            </div>
+
+            <!-- Sección de Permisos -->
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">
+                  <i class="fas fa-key me-2" />Permisos del Rol
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div 
+                    v-for="(permisos, modulo) in permisosAgrupados" 
+                    :key="modulo" 
+                    class="col-md-4 mb-3"
+                  >
+                    <div class="card h-100">
+                      <div class="card-header bg-secondary text-white py-2">
+                        <div class="form-check">
+                          <input 
+                            :id="'modulo-' + modulo" 
+                            class="form-check-input"
+                            type="checkbox"
+                            :checked="todosSeleccionados(permisos)"
+                            @change="toggleModulo(permisos, $event.target.checked)"
+                          >
+                          <label
+                            class="form-check-label text-capitalize"
+                            :for="'modulo-' + modulo"
+                          >
+                            <strong>{{ modulo }}</strong>
+                          </label>
+                        </div>
+                      </div>
+                      <div class="card-body p-2">
+                        <div 
+                          v-for="permiso in permisos" 
+                          :key="permiso.id" 
+                          class="form-check"
+                        >
+                          <input 
+                            :id="'permiso-' + permiso.id" 
+                            v-model="formulario.permisos"
+                            class="form-check-input"
+                            type="checkbox"
+                            :value="permiso.id"
+                          >
+                          <label
+                            class="form-check-label small"
+                            :for="'permiso-' + permiso.id"
+                          >
+                            {{ permiso.nombre }}
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p
+                  v-if="Object.keys(permisosAgrupados).length === 0"
+                  class="text-muted small mb-0"
+                >
+                  <i class="fas fa-info-circle me-1" />
+                  No hay permisos configurados. Crea permisos desde el módulo de Permisos.
+                </p>
+              </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex justify-content-end gap-2">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                @click="cancelarFormulario"
+              >
+                <i class="fas fa-times me-2" />Cancelar
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                :disabled="guardando"
+              >
+                <i class="fas fa-save me-2" />
+                {{ guardando ? 'Guardando...' : 'Guardar Rol' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -221,7 +285,7 @@ const cargarPermisos = async () => {
             permisosAgrupados.value = response.data.data.agrupados || {};
         }
     } catch (error) {
-        console.error('Error al cargar permisos:', error);
+        //console.error('Error al cargar permisos:', error);
     }
 };
 
@@ -360,7 +424,7 @@ const nuevoRegistro = async () => {
             formulario.value.codigo = response.data.data.codigo;
         }
     } catch (error) {
-        console.error('Error al generar código:', error);
+        //console.error('Error al generar código:', error);
     }
 };
 

@@ -1,151 +1,206 @@
 <template>
-    <div class="permiso-module">
-        <!-- Vista de Tabla -->
-        <div v-show="!mostrarFormulario" class="fade-in">
-            <!-- Header -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-4">
-                            <h5 class="mb-0">
-                                <i class="fas fa-key text-warning me-2"></i>
-                                Gestión de Permisos
-                            </h5>
-                            <small class="text-muted">Administra los permisos del sistema</small>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="d-flex justify-content-end gap-2 flex-wrap">
-                                <select class="form-select form-select-sm" style="width: 180px;" v-model="filtros.modulo" @change="aplicarFiltros">
-                                    <option value="">Todos los módulos</option>
-                                    <option v-for="(nombre, codigo) in modulos" :key="codigo" :value="codigo">
-                                        {{ nombre }}
-                                    </option>
-                                </select>
-                                <button class="btn btn-outline-info btn-sm" @click="cargarDatos">
-                                    <i class="fas fa-sync-alt me-1"></i>Actualizar
-                                </button>
-                                <button class="btn btn-warning" @click="nuevoRegistro">
-                                    <i class="fas fa-plus me-2"></i>Nuevo Permiso
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  <div class="permiso-module">
+    <!-- Vista de Tabla -->
+    <div
+      v-show="!mostrarFormulario"
+      class="fade-in"
+    >
+      <!-- Header -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-4">
+              <h5 class="mb-0">
+                <i class="fas fa-key text-warning me-2" />
+                Gestión de Permisos
+              </h5>
+              <small class="text-muted">Administra los permisos del sistema</small>
             </div>
-
-            <!-- Tabla -->
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <table id="tablaPermisos" class="table table-hover table-striped w-100">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Código</th>
-                                <th>Nombre</th>
-                                <th>Módulo</th>
-                                <th>Descripción</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
+            <div class="col-md-8">
+              <div class="d-flex justify-content-end gap-2 flex-wrap">
+                <select
+                  v-model="filtros.modulo"
+                  class="form-select form-select-sm"
+                  style="width: 180px;"
+                  @change="aplicarFiltros"
+                >
+                  <option value="">
+                    Todos los módulos
+                  </option>
+                  <option
+                    v-for="(nombre, codigo) in modulos"
+                    :key="codigo"
+                    :value="codigo"
+                  >
+                    {{ nombre }}
+                  </option>
+                </select>
+                <button
+                  class="btn btn-outline-info btn-sm"
+                  @click="cargarDatos"
+                >
+                  <i class="fas fa-sync-alt me-1" />Actualizar
+                </button>
+                <button
+                  class="btn btn-warning"
+                  @click="nuevoRegistro"
+                >
+                  <i class="fas fa-plus me-2" />Nuevo Permiso
+                </button>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
 
-        <!-- Vista de Formulario -->
-        <div v-show="mostrarFormulario" class="fade-in">
-            <div class="card shadow-sm">
-                <div class="card-header bg-warning text-dark">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i :class="modoEdicion ? 'fas fa-edit' : 'fas fa-plus'" class="me-2"></i>
-                            {{ modoEdicion ? 'Editar Permiso' : 'Nuevo Permiso' }}
-                        </h5>
-                        <button class="btn btn-light btn-sm" @click="cancelarFormulario">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <form @submit.prevent="guardarPermiso">
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">
-                                    Código <span class="text-danger">*</span>
-                                </label>
-                                <input 
-                                    type="text" 
-                                    class="form-control"
-                                    :class="{ 'is-invalid': errores.codigo }"
-                                    v-model="formulario.codigo"
-                                    placeholder="Ej: productos.ver"
-                                    maxlength="100"
-                                >
-                                <div class="invalid-feedback" v-if="errores.codigo">
-                                    {{ errores.codigo[0] }}
-                                </div>
-                                <small class="text-muted">Formato: modulo.accion (ej: productos.ver)</small>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">
-                                    Nombre <span class="text-danger">*</span>
-                                </label>
-                                <input 
-                                    type="text" 
-                                    class="form-control"
-                                    :class="{ 'is-invalid': errores.nombre }"
-                                    v-model="formulario.nombre"
-                                    placeholder="Ej: Ver Productos"
-                                    maxlength="150"
-                                >
-                                <div class="invalid-feedback" v-if="errores.nombre">
-                                    {{ errores.nombre[0] }}
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">
-                                    Módulo <span class="text-danger">*</span>
-                                </label>
-                                <select 
-                                    class="form-select"
-                                    :class="{ 'is-invalid': errores.modulo }"
-                                    v-model="formulario.modulo"
-                                >
-                                    <option value="">Seleccione módulo</option>
-                                    <option v-for="(nombre, codigo) in modulos" :key="codigo" :value="codigo">
-                                        {{ nombre }}
-                                    </option>
-                                </select>
-                                <div class="invalid-feedback" v-if="errores.modulo">
-                                    {{ errores.modulo[0] }}
-                                </div>
-                            </div>
-                            <div class="col-12 mb-3">
-                                <label class="form-label">Descripción</label>
-                                <textarea 
-                                    class="form-control"
-                                    v-model="formulario.descripcion"
-                                    placeholder="Descripción del permiso"
-                                    rows="2"
-                                ></textarea>
-                            </div>
-                        </div>
-
-                        <!-- Botones -->
-                        <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-secondary" @click="cancelarFormulario">
-                                <i class="fas fa-times me-2"></i>Cancelar
-                            </button>
-                            <button type="submit" class="btn btn-warning" :disabled="guardando">
-                                <i class="fas fa-save me-2"></i>
-                                {{ guardando ? 'Guardando...' : 'Guardar Permiso' }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+      <!-- Tabla -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <table
+            id="tablaPermisos"
+            class="table table-hover table-striped w-100"
+          >
+            <thead class="table-dark">
+              <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Módulo</th>
+                <th>Descripción</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody />
+          </table>
         </div>
+      </div>
     </div>
+
+    <!-- Vista de Formulario -->
+    <div
+      v-show="mostrarFormulario"
+      class="fade-in"
+    >
+      <div class="card shadow-sm">
+        <div class="card-header bg-warning text-dark">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i
+                :class="modoEdicion ? 'fas fa-edit' : 'fas fa-plus'"
+                class="me-2"
+              />
+              {{ modoEdicion ? 'Editar Permiso' : 'Nuevo Permiso' }}
+            </h5>
+            <button
+              class="btn btn-light btn-sm"
+              @click="cancelarFormulario"
+            >
+              <i class="fas fa-times" />
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <form @submit.prevent="guardarPermiso">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">
+                  Código <span class="text-danger">*</span>
+                </label>
+                <input 
+                  v-model="formulario.codigo" 
+                  type="text"
+                  class="form-control"
+                  :class="{ 'is-invalid': errores.codigo }"
+                  placeholder="Ej: productos.ver"
+                  maxlength="100"
+                >
+                <div
+                  v-if="errores.codigo"
+                  class="invalid-feedback"
+                >
+                  {{ errores.codigo[0] }}
+                </div>
+                <small class="text-muted">Formato: modulo.accion (ej: productos.ver)</small>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">
+                  Nombre <span class="text-danger">*</span>
+                </label>
+                <input 
+                  v-model="formulario.nombre" 
+                  type="text"
+                  class="form-control"
+                  :class="{ 'is-invalid': errores.nombre }"
+                  placeholder="Ej: Ver Productos"
+                  maxlength="150"
+                >
+                <div
+                  v-if="errores.nombre"
+                  class="invalid-feedback"
+                >
+                  {{ errores.nombre[0] }}
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">
+                  Módulo <span class="text-danger">*</span>
+                </label>
+                <select 
+                  v-model="formulario.modulo"
+                  class="form-select"
+                  :class="{ 'is-invalid': errores.modulo }"
+                >
+                  <option value="">
+                    Seleccione módulo
+                  </option>
+                  <option
+                    v-for="(nombre, codigo) in modulos"
+                    :key="codigo"
+                    :value="codigo"
+                  >
+                    {{ nombre }}
+                  </option>
+                </select>
+                <div
+                  v-if="errores.modulo"
+                  class="invalid-feedback"
+                >
+                  {{ errores.modulo[0] }}
+                </div>
+              </div>
+              <div class="col-12 mb-3">
+                <label class="form-label">Descripción</label>
+                <textarea 
+                  v-model="formulario.descripcion"
+                  class="form-control"
+                  placeholder="Descripción del permiso"
+                  rows="2"
+                />
+              </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex justify-content-end gap-2">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                @click="cancelarFormulario"
+              >
+                <i class="fas fa-times me-2" />Cancelar
+              </button>
+              <button
+                type="submit"
+                class="btn btn-warning"
+                :disabled="guardando"
+              >
+                <i class="fas fa-save me-2" />
+                {{ guardando ? 'Guardando...' : 'Guardar Permiso' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -186,7 +241,7 @@ const cargarModulos = async () => {
             modulos.value = response.data.data;
         }
     } catch (error) {
-        console.error('Error al cargar módulos:', error);
+        //console.error('Error al cargar módulos:', error);
     }
 };
 

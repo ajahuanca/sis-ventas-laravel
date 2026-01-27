@@ -1,279 +1,349 @@
 <template>
-    <div class="dashboard-profesional">
-        <!-- Cargando -->
-        <div v-if="cargando" class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Cargando...</span>
+  <div class="dashboard-profesional">
+    <!-- Cargando -->
+    <div
+      v-if="cargando"
+      class="text-center py-5"
+    >
+      <div
+        class="spinner-border text-primary"
+        role="status"
+      >
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-3 text-muted">
+        Cargando estadísticas...
+      </p>
+    </div>
+
+    <template v-else>
+      <!-- Tarjetas de resumen -->
+      <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-3">
+          <div class="stat-card stat-card-success">
+            <div class="stat-card-body">
+              <div class="stat-icon">
+                <i class="fas fa-dollar-sign" />
+              </div>
+              <div class="stat-content">
+                <h3 class="stat-value">
+                  Bs. {{ formatNumber(stats.resumen?.ventas_mes || 0) }}
+                </h3>
+                <p class="stat-label">
+                  Ventas del Mes
+                </p>
+                <div
+                  class="stat-change"
+                  :class="stats.resumen?.variacion_ventas >= 0 ? 'text-success' : 'text-danger'"
+                >
+                  <i :class="stats.resumen?.variacion_ventas >= 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'" />
+                  {{ Math.abs(stats.resumen?.variacion_ventas || 0) }}% vs mes anterior
+                </div>
+              </div>
             </div>
-            <p class="mt-3 text-muted">Cargando estadísticas...</p>
+          </div>
         </div>
 
-        <template v-else>
-            <!-- Tarjetas de resumen -->
-            <div class="row mb-4">
-                <div class="col-xl-3 col-md-6 mb-3">
-                    <div class="stat-card stat-card-success">
-                        <div class="stat-card-body">
-                            <div class="stat-icon">
-                                <i class="fas fa-dollar-sign"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 class="stat-value">Bs. {{ formatNumber(stats.resumen?.ventas_mes || 0) }}</h3>
-                                <p class="stat-label">Ventas del Mes</p>
-                                <div class="stat-change" :class="stats.resumen?.variacion_ventas >= 0 ? 'text-success' : 'text-danger'">
-                                    <i :class="stats.resumen?.variacion_ventas >= 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
-                                    {{ Math.abs(stats.resumen?.variacion_ventas || 0) }}% vs mes anterior
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+          <div class="stat-card stat-card-warning">
+            <div class="stat-card-body">
+              <div class="stat-icon">
+                <i class="fas fa-shopping-basket" />
+              </div>
+              <div class="stat-content">
+                <h3 class="stat-value">
+                  Bs. {{ formatNumber(stats.resumen?.compras_mes || 0) }}
+                </h3>
+                <p class="stat-label">
+                  Compras del Mes
+                </p>
+                <div class="stat-change text-muted">
+                  Inversión en productos
                 </div>
-
-                <div class="col-xl-3 col-md-6 mb-3">
-                    <div class="stat-card stat-card-warning">
-                        <div class="stat-card-body">
-                            <div class="stat-icon">
-                                <i class="fas fa-shopping-basket"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 class="stat-value">Bs. {{ formatNumber(stats.resumen?.compras_mes || 0) }}</h3>
-                                <p class="stat-label">Compras del Mes</p>
-                                <div class="stat-change text-muted">
-                                    Inversión en productos
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-3 col-md-6 mb-3">
-                    <div class="stat-card stat-card-primary">
-                        <div class="stat-card-body">
-                            <div class="stat-icon">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 class="stat-value">Bs. {{ formatNumber(stats.resumen?.ganancia_estimada || 0) }}</h3>
-                                <p class="stat-label">Ganancia Estimada</p>
-                                <div class="stat-change" :class="(stats.resumen?.ganancia_estimada || 0) >= 0 ? 'text-success' : 'text-danger'">
-                                    {{ (stats.resumen?.ganancia_estimada || 0) >= 0 ? 'Positivo' : 'Negativo' }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-3 col-md-6 mb-3">
-                    <div class="stat-card stat-card-info">
-                        <div class="stat-card-body">
-                            <div class="stat-icon">
-                                <i class="fas fa-boxes"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 class="stat-value">{{ stats.resumen?.total_productos || 0 }}</h3>
-                                <p class="stat-label">Productos Activos</p>
-                                <div class="stat-change" :class="(stats.resumen?.productos_stock_bajo || 0) > 0 ? 'text-warning' : 'text-success'">
-                                    <i class="fas fa-exclamation-triangle" v-if="(stats.resumen?.productos_stock_bajo || 0) > 0"></i>
-                                    {{ stats.resumen?.productos_stock_bajo || 0 }} con stock bajo
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+              </div>
             </div>
+          </div>
+        </div>
 
-            <!-- Segunda fila de métricas -->
-            <div class="row mb-4">
-                <div class="col-md-4 mb-3">
-                    <div class="metric-card">
-                        <div class="metric-icon bg-success">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="metric-info">
-                            <h4>{{ stats.resumen?.total_clientes || 0 }}</h4>
-                            <span>Clientes Registrados</span>
-                        </div>
-                    </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+          <div class="stat-card stat-card-primary">
+            <div class="stat-card-body">
+              <div class="stat-icon">
+                <i class="fas fa-chart-line" />
+              </div>
+              <div class="stat-content">
+                <h3 class="stat-value">
+                  Bs. {{ formatNumber(stats.resumen?.ganancia_estimada || 0) }}
+                </h3>
+                <p class="stat-label">
+                  Ganancia Estimada
+                </p>
+                <div
+                  class="stat-change"
+                  :class="(stats.resumen?.ganancia_estimada || 0) >= 0 ? 'text-success' : 'text-danger'"
+                >
+                  {{ (stats.resumen?.ganancia_estimada || 0) >= 0 ? 'Positivo' : 'Negativo' }}
                 </div>
-                <div class="col-md-4 mb-3">
-                    <div class="metric-card">
-                        <div class="metric-icon bg-primary">
-                            <i class="fas fa-truck"></i>
-                        </div>
-                        <div class="metric-info">
-                            <h4>{{ stats.resumen?.total_proveedores || 0 }}</h4>
-                            <span>Proveedores Activos</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="metric-card">
-                        <div class="metric-icon bg-warning">
-                            <i class="fas fa-receipt"></i>
-                        </div>
-                        <div class="metric-info">
-                            <h4>Bs. {{ formatNumber(stats.resumen?.ventas_mes_anterior || 0) }}</h4>
-                            <span>Ventas Mes Anterior</span>
-                        </div>
-                    </div>
-                </div>
+              </div>
             </div>
+          </div>
+        </div>
 
-            <!-- Contenido principal -->
-            <div class="row">
-                <!-- Gráfico de ventas y Top productos -->
-                <div class="col-xl-8 mb-4">
-                    <!-- Top Productos -->
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">
-                                <i class="fas fa-star text-warning me-2"></i>
-                                Top 5 Productos del Mes
-                            </h5>
-                            <span class="badge bg-primary">{{ mesActual }}</span>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>#</th>
-                                            <th>Producto</th>
-                                            <th class="text-center">Cantidad</th>
-                                            <th class="text-end">Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="(prod, index) in stats.graficos?.top_productos || []" :key="index">
-                                            <td>
-                                                <span class="badge" :class="getBadgeClass(index)">{{ index + 1 }}</span>
-                                            </td>
-                                            <td><strong>{{ prod.nombre }}</strong></td>
-                                            <td class="text-center">{{ prod.cantidad }}</td>
-                                            <td class="text-end text-success">
-                                                <strong>Bs. {{ formatNumber(prod.total) }}</strong>
-                                            </td>
-                                        </tr>
-                                        <tr v-if="!stats.graficos?.top_productos?.length">
-                                            <td colspan="4" class="text-center text-muted py-4">
-                                                <i class="fas fa-chart-bar fa-2x mb-2 d-block"></i>
-                                                No hay datos de ventas este mes
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Top Clientes -->
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">
-                                <i class="fas fa-user-friends text-info me-2"></i>
-                                Top 5 Clientes del Mes
-                            </h5>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>#</th>
-                                            <th>Cliente</th>
-                                            <th class="text-end">Total Compras</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="(cliente, index) in stats.graficos?.top_clientes || []" :key="index">
-                                            <td>
-                                                <span class="badge" :class="getBadgeClass(index)">{{ index + 1 }}</span>
-                                            </td>
-                                            <td><strong>{{ cliente.nombre }}</strong></td>
-                                            <td class="text-end text-primary">
-                                                <strong>Bs. {{ formatNumber(cliente.total) }}</strong>
-                                            </td>
-                                        </tr>
-                                        <tr v-if="!stats.graficos?.top_clientes?.length">
-                                            <td colspan="3" class="text-center text-muted py-4">
-                                                <i class="fas fa-users fa-2x mb-2 d-block"></i>
-                                                No hay datos de clientes este mes
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+          <div class="stat-card stat-card-info">
+            <div class="stat-card-body">
+              <div class="stat-icon">
+                <i class="fas fa-boxes" />
+              </div>
+              <div class="stat-content">
+                <h3 class="stat-value">
+                  {{ stats.resumen?.total_productos || 0 }}
+                </h3>
+                <p class="stat-label">
+                  Productos Activos
+                </p>
+                <div
+                  class="stat-change"
+                  :class="(stats.resumen?.productos_stock_bajo || 0) > 0 ? 'text-warning' : 'text-success'"
+                >
+                  <i
+                    v-if="(stats.resumen?.productos_stock_bajo || 0) > 0"
+                    class="fas fa-exclamation-triangle"
+                  />
+                  {{ stats.resumen?.productos_stock_bajo || 0 }} con stock bajo
                 </div>
-
-                <!-- Sidebar derecho -->
-                <div class="col-xl-4">
-                    <!-- Alertas de Stock -->
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-header bg-danger text-white">
-                            <h5 class="mb-0">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                Alertas de Stock
-                            </h5>
-                        </div>
-                        <div class="card-body p-0">
-                            <ul class="list-group list-group-flush">
-                                <li v-for="prod in stats.alertas?.productos_stock_bajo || []" 
-                                    :key="prod.nombre" 
-                                    class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong>{{ prod.nombre }}</strong>
-                                        <br>
-                                        <small class="text-muted">Mín: {{ prod.stock_minimo }}</small>
-                                    </div>
-                                    <span class="badge bg-danger rounded-pill">{{ prod.stock }}</span>
-                                </li>
-                                <li v-if="!stats.alertas?.productos_stock_bajo?.length" 
-                                    class="list-group-item text-center text-success py-4">
-                                    <i class="fas fa-check-circle fa-2x mb-2 d-block"></i>
-                                    <strong>¡Sin alertas!</strong>
-                                    <br>
-                                    <small>Todos los productos tienen stock suficiente</small>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Últimas Ventas -->
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-success text-white">
-                            <h5 class="mb-0">
-                                <i class="fas fa-receipt me-2"></i>
-                                Últimas Ventas
-                            </h5>
-                        </div>
-                        <div class="card-body p-0">
-                            <ul class="list-group list-group-flush">
-                                <li v-for="venta in stats.actividad?.ultimas_ventas || []" 
-                                    :key="venta.codigo" 
-                                    class="list-group-item">
-                                    <div class="d-flex justify-content-between">
-                                        <strong class="text-primary">{{ venta.codigo }}</strong>
-                                        <span class="text-success">Bs. {{ formatNumber(venta.total) }}</span>
-                                    </div>
-                                    <small class="text-muted">
-                                        <i class="fas fa-user me-1"></i>{{ venta.cliente }}
-                                        <span class="float-end">{{ venta.fecha }}</span>
-                                    </small>
-                                </li>
-                                <li v-if="!stats.actividad?.ultimas_ventas?.length" 
-                                    class="list-group-item text-center text-muted py-4">
-                                    <i class="fas fa-shopping-cart fa-2x mb-2 d-block"></i>
-                                    No hay ventas recientes
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+              </div>
             </div>
-        </template>
-    </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Segunda fila de métricas -->
+      <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+          <div class="metric-card">
+            <div class="metric-icon bg-success">
+              <i class="fas fa-users" />
+            </div>
+            <div class="metric-info">
+              <h4>{{ stats.resumen?.total_clientes || 0 }}</h4>
+              <span>Clientes Registrados</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="metric-card">
+            <div class="metric-icon bg-primary">
+              <i class="fas fa-truck" />
+            </div>
+            <div class="metric-info">
+              <h4>{{ stats.resumen?.total_proveedores || 0 }}</h4>
+              <span>Proveedores Activos</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="metric-card">
+            <div class="metric-icon bg-warning">
+              <i class="fas fa-receipt" />
+            </div>
+            <div class="metric-info">
+              <h4>Bs. {{ formatNumber(stats.resumen?.ventas_mes_anterior || 0) }}</h4>
+              <span>Ventas Mes Anterior</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenido principal -->
+      <div class="row">
+        <!-- Gráfico de ventas y Top productos -->
+        <div class="col-xl-8 mb-4">
+          <!-- Top Productos -->
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">
+                <i class="fas fa-star text-warning me-2" />
+                Top 5 Productos del Mes
+              </h5>
+              <span class="badge bg-primary">{{ mesActual }}</span>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>#</th>
+                      <th>Producto</th>
+                      <th class="text-center">
+                        Cantidad
+                      </th>
+                      <th class="text-end">
+                        Total
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(prod, index) in stats.graficos?.top_productos || []"
+                      :key="index"
+                    >
+                      <td>
+                        <span
+                          class="badge"
+                          :class="getBadgeClass(index)"
+                        >{{ index + 1 }}</span>
+                      </td>
+                      <td><strong>{{ prod.nombre }}</strong></td>
+                      <td class="text-center">
+                        {{ prod.cantidad }}
+                      </td>
+                      <td class="text-end text-success">
+                        <strong>Bs. {{ formatNumber(prod.total) }}</strong>
+                      </td>
+                    </tr>
+                    <tr v-if="!stats.graficos?.top_productos?.length">
+                      <td
+                        colspan="4"
+                        class="text-center text-muted py-4"
+                      >
+                        <i class="fas fa-chart-bar fa-2x mb-2 d-block" />
+                        No hay datos de ventas este mes
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Clientes -->
+          <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">
+                <i class="fas fa-user-friends text-info me-2" />
+                Top 5 Clientes del Mes
+              </h5>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>#</th>
+                      <th>Cliente</th>
+                      <th class="text-end">
+                        Total Compras
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(cliente, index) in stats.graficos?.top_clientes || []"
+                      :key="index"
+                    >
+                      <td>
+                        <span
+                          class="badge"
+                          :class="getBadgeClass(index)"
+                        >{{ index + 1 }}</span>
+                      </td>
+                      <td><strong>{{ cliente.nombre }}</strong></td>
+                      <td class="text-end text-primary">
+                        <strong>Bs. {{ formatNumber(cliente.total) }}</strong>
+                      </td>
+                    </tr>
+                    <tr v-if="!stats.graficos?.top_clientes?.length">
+                      <td
+                        colspan="3"
+                        class="text-center text-muted py-4"
+                      >
+                        <i class="fas fa-users fa-2x mb-2 d-block" />
+                        No hay datos de clientes este mes
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar derecho -->
+        <div class="col-xl-4">
+          <!-- Alertas de Stock -->
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-danger text-white">
+              <h5 class="mb-0">
+                <i class="fas fa-exclamation-triangle me-2" />
+                Alertas de Stock
+              </h5>
+            </div>
+            <div class="card-body p-0">
+              <ul class="list-group list-group-flush">
+                <li
+                  v-for="prod in stats.alertas?.productos_stock_bajo || []" 
+                  :key="prod.nombre" 
+                  class="list-group-item d-flex justify-content-between align-items-center"
+                >
+                  <div>
+                    <strong>{{ prod.nombre }}</strong>
+                    <br>
+                    <small class="text-muted">Mín: {{ prod.stock_minimo }}</small>
+                  </div>
+                  <span class="badge bg-danger rounded-pill">{{ prod.stock }}</span>
+                </li>
+                <li
+                  v-if="!stats.alertas?.productos_stock_bajo?.length" 
+                  class="list-group-item text-center text-success py-4"
+                >
+                  <i class="fas fa-check-circle fa-2x mb-2 d-block" />
+                  <strong>¡Sin alertas!</strong>
+                  <br>
+                  <small>Todos los productos tienen stock suficiente</small>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Últimas Ventas -->
+          <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+              <h5 class="mb-0">
+                <i class="fas fa-receipt me-2" />
+                Últimas Ventas
+              </h5>
+            </div>
+            <div class="card-body p-0">
+              <ul class="list-group list-group-flush">
+                <li
+                  v-for="venta in stats.actividad?.ultimas_ventas || []" 
+                  :key="venta.codigo" 
+                  class="list-group-item"
+                >
+                  <div class="d-flex justify-content-between">
+                    <strong class="text-primary">{{ venta.codigo }}</strong>
+                    <span class="text-success">Bs. {{ formatNumber(venta.total) }}</span>
+                  </div>
+                  <small class="text-muted">
+                    <i class="fas fa-user me-1" />{{ venta.cliente }}
+                    <span class="float-end">{{ venta.fecha }}</span>
+                  </small>
+                </li>
+                <li
+                  v-if="!stats.actividad?.ultimas_ventas?.length" 
+                  class="list-group-item text-center text-muted py-4"
+                >
+                  <i class="fas fa-shopping-cart fa-2x mb-2 d-block" />
+                  No hay ventas recientes
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
 </template>
 
 <script setup>
@@ -297,7 +367,7 @@ const cargarEstadisticas = async () => {
             stats.value = response.data.data;
         }
     } catch (error) {
-        console.error('Error al cargar estadísticas:', error);
+        //console.error('Error al cargar estadísticas:', error);
     } finally {
         cargando.value = false;
     }

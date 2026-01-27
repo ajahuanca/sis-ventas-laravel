@@ -1,306 +1,400 @@
 <template>
-    <div class="producto-module">
-        <!-- Vista de Tabla -->
-        <div v-show="!mostrarFormulario" class="fade-in">
-            <!-- Header con botones y filtros -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-4">
-                            <h5 class="mb-0">
-                                <i class="fas fa-box text-primary me-2"></i>
-                                Gestión de Productos
-                            </h5>
-                            <small class="text-muted">Administra tu inventario de productos</small>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="d-flex justify-content-end gap-2">
-                                <button class="btn btn-outline-info btn-sm" @click="cargarDatos">
-                                    <i class="fas fa-sync-alt me-1"></i>Actualizar
-                                </button>
-                                <button class="btn btn-primary" @click="nuevoRegistro">
-                                    <i class="fas fa-plus me-2"></i>Nuevo Producto
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  <div class="producto-module">
+    <!-- Vista de Tabla -->
+    <div
+      v-show="!mostrarFormulario"
+      class="fade-in"
+    >
+      <!-- Header con botones y filtros -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-4">
+              <h5 class="mb-0">
+                <i class="fas fa-box text-primary me-2" />
+                Gestión de Productos
+              </h5>
+              <small class="text-muted">Administra tu inventario de productos</small>
             </div>
-
-            <!-- Tabla de Productos -->
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <table id="tablaProductos" class="table table-hover table-striped w-100">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Código</th>
-                                <th>Producto</th>
-                                <th>Categoría</th>
-                                <th>P. Compra</th>
-                                <th>P. Venta</th>
-                                <th>Stock</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- DataTable cargará los datos aquí -->
-                        </tbody>
-                    </table>
-                </div>
+            <div class="col-md-8">
+              <div class="d-flex justify-content-end gap-2">
+                <button
+                  class="btn btn-outline-info btn-sm"
+                  @click="cargarDatos"
+                >
+                  <i class="fas fa-sync-alt me-1" />Actualizar
+                </button>
+                <button
+                  class="btn btn-primary"
+                  @click="nuevoRegistro"
+                >
+                  <i class="fas fa-plus me-2" />Nuevo Producto
+                </button>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
 
-        <!-- Vista de Formulario -->
-        <div v-show="mostrarFormulario" class="fade-in">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i :class="modoEdicion ? 'fas fa-edit' : 'fas fa-plus'" class="me-2"></i>
-                            {{ modoEdicion ? 'Editar Producto' : 'Nuevo Producto' }}
-                        </h5>
-                        <button class="btn btn-light btn-sm" @click="cancelarFormulario">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <form @submit.prevent="guardarProducto">
-                        <div class="row">
-                            <!-- Columna Izquierda -->
-                            <div class="col-md-6">
-                                <!-- Código -->
-                                <div class="mb-3">
-                                    <label class="form-label">
-                                        Código <span class="text-danger">*</span>
-                                    </label>
-                                    <div class="input-group">
-                                        <input 
-                                            type="text" 
-                                            class="form-control" 
-                                            :class="{ 'is-invalid': errores.codigo }"
-                                            v-model="formulario.codigo"
-                                            placeholder="PROD000001"
-                                            maxlength="50"
-                                        >
-                                        <button 
-                                            class="btn btn-outline-secondary" 
-                                            type="button"
-                                            @click="generarCodigo"
-                                            :disabled="modoEdicion"
-                                        >
-                                            <i class="fas fa-magic"></i> Generar
-                                        </button>
-                                        <div class="invalid-feedback" v-if="errores.codigo">
-                                            {{ errores.codigo[0] }}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Nombre -->
-                                <div class="mb-3">
-                                    <label class="form-label">
-                                        Nombre <span class="text-danger">*</span>
-                                    </label>
-                                    <input 
-                                        type="text" 
-                                        class="form-control" 
-                                        :class="{ 'is-invalid': errores.nombre }"
-                                        v-model="formulario.nombre"
-                                        placeholder="Nombre del producto"
-                                        maxlength="150"
-                                    >
-                                    <div class="invalid-feedback" v-if="errores.nombre">
-                                        {{ errores.nombre[0] }}
-                                    </div>
-                                </div>
-
-                                <!-- Categoría con Select2 -->
-                                <div class="mb-3">
-                                    <label class="form-label">
-                                        Categoría <span class="text-danger">*</span>
-                                    </label>
-                                    <select 
-                                        id="selectCategoria"
-                                        class="form-select" 
-                                        :class="{ 'is-invalid': errores.categoria_id }"
-                                    >
-                                        <option value="">Seleccione una categoría</option>
-                                    </select>
-                                    <div class="invalid-feedback d-block" v-if="errores.categoria_id">
-                                        {{ errores.categoria_id[0] }}
-                                    </div>
-                                </div>
-
-                                <!-- Descripción -->
-                                <div class="mb-3">
-                                    <label class="form-label">Descripción</label>
-                                    <textarea 
-                                        class="form-control" 
-                                        :class="{ 'is-invalid': errores.descripcion }"
-                                        v-model="formulario.descripcion"
-                                        placeholder="Descripción del producto"
-                                        rows="3"
-                                    ></textarea>
-                                    <div class="invalid-feedback" v-if="errores.descripcion">
-                                        {{ errores.descripcion[0] }}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Columna Derecha -->
-                            <div class="col-md-6">
-                                <!-- Precio de Compra -->
-                                <div class="mb-3">
-                                    <label class="form-label">
-                                        Precio de Compra <span class="text-danger">*</span>
-                                    </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">Bs.</span>
-                                        <input 
-                                            type="number" 
-                                            step="0.01"
-                                            class="form-control" 
-                                            :class="{ 'is-invalid': errores.precio_compra }"
-                                            v-model="formulario.precio_compra"
-                                            placeholder="0.00"
-                                            @input="calcularMargen"
-                                        >
-                                        <div class="invalid-feedback" v-if="errores.precio_compra">
-                                            {{ errores.precio_compra[0] }}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Precio de Venta -->
-                                <div class="mb-3">
-                                    <label class="form-label">
-                                        Precio de Venta <span class="text-danger">*</span>
-                                    </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">$</span>
-                                        <input 
-                                            type="number" 
-                                            step="0.01"
-                                            class="form-control" 
-                                            :class="{ 'is-invalid': errores.precio_venta }"
-                                            v-model="formulario.precio_venta"
-                                            placeholder="0.00"
-                                            @input="calcularMargen"
-                                        >
-                                        <div class="invalid-feedback" v-if="errores.precio_venta">
-                                            {{ errores.precio_venta[0] }}
-                                        </div>
-                                    </div>
-                                    <small class="text-muted" v-if="margenUtilidad !== null">
-                                        Margen: <strong :class="margenUtilidad > 0 ? 'text-success' : 'text-danger'">
-                                            {{ margenUtilidad }}%
-                                        </strong>
-                                    </small>
-                                </div>
-
-                                <!-- Stock y Stock Mínimo -->
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">
-                                            Stock <span class="text-danger">*</span>
-                                        </label>
-                                        <input 
-                                            type="number" 
-                                            class="form-control" 
-                                            :class="{ 'is-invalid': errores.stock }"
-                                            v-model="formulario.stock"
-                                            placeholder="0"
-                                            min="0"
-                                        >
-                                        <div class="invalid-feedback" v-if="errores.stock">
-                                            {{ errores.stock[0] }}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">
-                                            Stock Mínimo <span class="text-danger">*</span>
-                                        </label>
-                                        <input 
-                                            type="number" 
-                                            class="form-control" 
-                                            :class="{ 'is-invalid': errores.stock_minimo }"
-                                            v-model="formulario.stock_minimo"
-                                            placeholder="0"
-                                            min="0"
-                                        >
-                                        <div class="invalid-feedback" v-if="errores.stock_minimo">
-                                            {{ errores.stock_minimo[0] }}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Unidad de Medida -->
-                                <div class="mb-3">
-                                    <label class="form-label">
-                                        Unidad de Medida <span class="text-danger">*</span>
-                                    </label>
-                                    <select 
-                                        class="form-select" 
-                                        :class="{ 'is-invalid': errores.unidad_medida }"
-                                        v-model="formulario.unidad_medida"
-                                    >
-                                        <option value="UND">Unidad</option>
-                                        <option value="KG">Kilogramo</option>
-                                        <option value="GR">Gramo</option>
-                                        <option value="LT">Litro</option>
-                                        <option value="ML">Mililitro</option>
-                                        <option value="MT">Metro</option>
-                                        <option value="CM">Centímetro</option>
-                                        <option value="CAJ">Caja</option>
-                                        <option value="PAQ">Paquete</option>
-                                    </select>
-                                    <div class="invalid-feedback" v-if="errores.unidad_medida">
-                                        {{ errores.unidad_medida[0] }}
-                                    </div>
-                                </div>
-
-                                <!-- Imagen -->
-                                <div class="mb-3">
-                                    <label class="form-label">Imagen del Producto</label>
-                                    <input 
-                                        type="file" 
-                                        class="form-control" 
-                                        :class="{ 'is-invalid': errores.imagen }"
-                                        @change="onImagenChange"
-                                        accept="image/*"
-                                        ref="inputImagen"
-                                    >
-                                    <div class="invalid-feedback" v-if="errores.imagen">
-                                        {{ errores.imagen[0] }}
-                                    </div>
-                                    <!-- Vista previa -->
-                                    <div v-if="vistaPrevia" class="mt-2">
-                                        <img :src="vistaPrevia" alt="Vista previa" class="img-thumbnail" style="max-width: 200px;">
-                                        <button type="button" class="btn btn-sm btn-danger ms-2" @click="eliminarImagen">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Botones -->
-                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                            <button type="button" class="btn btn-secondary" @click="cancelarFormulario">
-                                <i class="fas fa-times me-2"></i>Cancelar
-                            </button>
-                            <button type="submit" class="btn btn-primary" :disabled="guardando">
-                                <i class="fas fa-save me-2"></i>
-                                {{ guardando ? 'Guardando...' : 'Guardar Producto' }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+      <!-- Tabla de Productos -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <table
+            id="tablaProductos"
+            class="table table-hover table-striped w-100"
+          >
+            <thead class="table-dark">
+              <tr>
+                <th>Código</th>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>P. Compra</th>
+                <th>P. Venta</th>
+                <th>Stock</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- DataTable cargará los datos aquí -->
+            </tbody>
+          </table>
         </div>
+      </div>
     </div>
+
+    <!-- Vista de Formulario -->
+    <div
+      v-show="mostrarFormulario"
+      class="fade-in"
+    >
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i
+                :class="modoEdicion ? 'fas fa-edit' : 'fas fa-plus'"
+                class="me-2"
+              />
+              {{ modoEdicion ? 'Editar Producto' : 'Nuevo Producto' }}
+            </h5>
+            <button
+              class="btn btn-light btn-sm"
+              @click="cancelarFormulario"
+            >
+              <i class="fas fa-times" />
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <form @submit.prevent="guardarProducto">
+            <div class="row">
+              <!-- Columna Izquierda -->
+              <div class="col-md-6">
+                <!-- Código -->
+                <div class="mb-3">
+                  <label class="form-label">
+                    Código <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <input 
+                      v-model="formulario.codigo" 
+                      type="text" 
+                      class="form-control"
+                      :class="{ 'is-invalid': errores.codigo }"
+                      placeholder="PROD000001"
+                      maxlength="50"
+                    >
+                    <button 
+                      class="btn btn-outline-secondary" 
+                      type="button"
+                      :disabled="modoEdicion"
+                      @click="generarCodigo"
+                    >
+                      <i class="fas fa-magic" /> Generar
+                    </button>
+                    <div
+                      v-if="errores.codigo"
+                      class="invalid-feedback"
+                    >
+                      {{ errores.codigo[0] }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Nombre -->
+                <div class="mb-3">
+                  <label class="form-label">
+                    Nombre <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    v-model="formulario.nombre" 
+                    type="text" 
+                    class="form-control"
+                    :class="{ 'is-invalid': errores.nombre }"
+                    placeholder="Nombre del producto"
+                    maxlength="150"
+                  >
+                  <div
+                    v-if="errores.nombre"
+                    class="invalid-feedback"
+                  >
+                    {{ errores.nombre[0] }}
+                  </div>
+                </div>
+
+                <!-- Categoría con Select2 -->
+                <div class="mb-3">
+                  <label class="form-label">
+                    Categoría <span class="text-danger">*</span>
+                  </label>
+                  <select 
+                    id="selectCategoria"
+                    class="form-select" 
+                    :class="{ 'is-invalid': errores.categoria_id }"
+                  >
+                    <option value="">
+                      Seleccione una categoría
+                    </option>
+                  </select>
+                  <div
+                    v-if="errores.categoria_id"
+                    class="invalid-feedback d-block"
+                  >
+                    {{ errores.categoria_id[0] }}
+                  </div>
+                </div>
+
+                <!-- Descripción -->
+                <div class="mb-3">
+                  <label class="form-label">Descripción</label>
+                  <textarea 
+                    v-model="formulario.descripcion" 
+                    class="form-control"
+                    :class="{ 'is-invalid': errores.descripcion }"
+                    placeholder="Descripción del producto"
+                    rows="3"
+                  />
+                  <div
+                    v-if="errores.descripcion"
+                    class="invalid-feedback"
+                  >
+                    {{ errores.descripcion[0] }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Columna Derecha -->
+              <div class="col-md-6">
+                <!-- Precio de Compra -->
+                <div class="mb-3">
+                  <label class="form-label">
+                    Precio de Compra <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <span class="input-group-text">Bs.</span>
+                    <input 
+                      v-model="formulario.precio_compra" 
+                      type="number"
+                      step="0.01" 
+                      class="form-control"
+                      :class="{ 'is-invalid': errores.precio_compra }"
+                      placeholder="0.00"
+                      @input="calcularMargen"
+                    >
+                    <div
+                      v-if="errores.precio_compra"
+                      class="invalid-feedback"
+                    >
+                      {{ errores.precio_compra[0] }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Precio de Venta -->
+                <div class="mb-3">
+                  <label class="form-label">
+                    Precio de Venta <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input 
+                      v-model="formulario.precio_venta" 
+                      type="number"
+                      step="0.01" 
+                      class="form-control"
+                      :class="{ 'is-invalid': errores.precio_venta }"
+                      placeholder="0.00"
+                      @input="calcularMargen"
+                    >
+                    <div
+                      v-if="errores.precio_venta"
+                      class="invalid-feedback"
+                    >
+                      {{ errores.precio_venta[0] }}
+                    </div>
+                  </div>
+                  <small
+                    v-if="margenUtilidad !== null"
+                    class="text-muted"
+                  >
+                    Margen: <strong :class="margenUtilidad > 0 ? 'text-success' : 'text-danger'">
+                      {{ margenUtilidad }}%
+                    </strong>
+                  </small>
+                </div>
+
+                <!-- Stock y Stock Mínimo -->
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">
+                      Stock <span class="text-danger">*</span>
+                    </label>
+                    <input 
+                      v-model="formulario.stock" 
+                      type="number" 
+                      class="form-control"
+                      :class="{ 'is-invalid': errores.stock }"
+                      placeholder="0"
+                      min="0"
+                    >
+                    <div
+                      v-if="errores.stock"
+                      class="invalid-feedback"
+                    >
+                      {{ errores.stock[0] }}
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">
+                      Stock Mínimo <span class="text-danger">*</span>
+                    </label>
+                    <input 
+                      v-model="formulario.stock_minimo" 
+                      type="number" 
+                      class="form-control"
+                      :class="{ 'is-invalid': errores.stock_minimo }"
+                      placeholder="0"
+                      min="0"
+                    >
+                    <div
+                      v-if="errores.stock_minimo"
+                      class="invalid-feedback"
+                    >
+                      {{ errores.stock_minimo[0] }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Unidad de Medida -->
+                <div class="mb-3">
+                  <label class="form-label">
+                    Unidad de Medida <span class="text-danger">*</span>
+                  </label>
+                  <select 
+                    v-model="formulario.unidad_medida" 
+                    class="form-select"
+                    :class="{ 'is-invalid': errores.unidad_medida }"
+                  >
+                    <option value="UND">
+                      Unidad
+                    </option>
+                    <option value="KG">
+                      Kilogramo
+                    </option>
+                    <option value="GR">
+                      Gramo
+                    </option>
+                    <option value="LT">
+                      Litro
+                    </option>
+                    <option value="ML">
+                      Mililitro
+                    </option>
+                    <option value="MT">
+                      Metro
+                    </option>
+                    <option value="CM">
+                      Centímetro
+                    </option>
+                    <option value="CAJ">
+                      Caja
+                    </option>
+                    <option value="PAQ">
+                      Paquete
+                    </option>
+                  </select>
+                  <div
+                    v-if="errores.unidad_medida"
+                    class="invalid-feedback"
+                  >
+                    {{ errores.unidad_medida[0] }}
+                  </div>
+                </div>
+
+                <!-- Imagen -->
+                <div class="mb-3">
+                  <label class="form-label">Imagen del Producto</label>
+                  <input 
+                    ref="inputImagen" 
+                    type="file" 
+                    class="form-control"
+                    :class="{ 'is-invalid': errores.imagen }"
+                    accept="image/*"
+                    @change="onImagenChange"
+                  >
+                  <div
+                    v-if="errores.imagen"
+                    class="invalid-feedback"
+                  >
+                    {{ errores.imagen[0] }}
+                  </div>
+                  <!-- Vista previa -->
+                  <div
+                    v-if="vistaPrevia"
+                    class="mt-2"
+                  >
+                    <img
+                      :src="vistaPrevia"
+                      alt="Vista previa"
+                      class="img-thumbnail"
+                      style="max-width: 200px;"
+                    >
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-danger ms-2"
+                      @click="eliminarImagen"
+                    >
+                      <i class="fas fa-trash" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                @click="cancelarFormulario"
+              >
+                <i class="fas fa-times me-2" />Cancelar
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                :disabled="guardando"
+              >
+                <i class="fas fa-save me-2" />
+                {{ guardando ? 'Guardando...' : 'Guardar Producto' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -359,7 +453,7 @@ const inicializarDataTable = () => {
                     return [];
                 },
                 error: function(xhr, error, thrown) {
-                    console.error('Error al cargar datos:', error);
+                    //console.error('Error al cargar datos:', error);
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
@@ -491,7 +585,7 @@ const cargarCategorias = async () => {
             categorias.value = response.data.data;
         }
     } catch (error) {
-        console.error('Error al cargar categorías:', error);
+        //console.error('Error al cargar categorías:', error);
         Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -507,13 +601,13 @@ const inicializarSelect2 = () => {
             try {
                 $('#selectCategoria').select2('destroy');
             } catch (e) {
-                console.log('Select2 no estaba inicializado');
+                //console.log('Select2 no estaba inicializado');
             }
         }
 
         // Verificar que jQuery y Select2 están disponibles
         if (typeof $ === 'undefined' || typeof $.fn.select2 === 'undefined') {
-            console.error('jQuery o Select2 no están disponibles');
+            //console.error('jQuery o Select2 no están disponibles');
             return;
         }
 
@@ -551,7 +645,7 @@ const inicializarSelect2 = () => {
             select2Inicializado.value = true;
 
         } catch (error) {
-            console.error('Error al inicializar Select2:', error);
+            //console.error('Error al inicializar Select2:', error);
         }
     });
 };
@@ -563,7 +657,7 @@ const generarCodigo = async () => {
             formulario.value.codigo = response.data.data.codigo;
         }
     } catch (error) {
-        console.error('Error al generar código:', error);
+        //console.error('Error al generar código:', error);
     }
 };
 
@@ -658,7 +752,7 @@ const editarProducto = async (id) => {
             });
         }
     } catch (error) {
-        console.error('Error al editar:', error);
+        //console.error('Error al editar:', error);
         Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -714,7 +808,7 @@ const guardarProducto = async () => {
             dataTable.value.ajax.reload();
         }
     } catch (error) {
-        console.error('Error al guardar:', error);
+        //console.error('Error al guardar:', error);
         if (error.response?.status === 422) {
             errores.value = error.response.data.errors || {};
             Swal.fire({
@@ -762,7 +856,7 @@ const toggleEstado = async (id, esActivar) => {
                 dataTable.value.ajax.reload(null, false);
             }
         } catch (error) {
-            console.error('Error al cambiar estado:', error);
+            //console.error('Error al cambiar estado:', error);
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
@@ -797,7 +891,7 @@ const cancelarFormulario = () => {
             $('#selectCategoria').select2('destroy');
             select2Inicializado.value = false;
         } catch (e) {
-            console.log('Error al destruir select2:', e);
+            //console.log('Error al destruir select2:', e);
         }
     }
 };
@@ -818,7 +912,7 @@ onBeforeUnmount(() => {
         try {
             $('#selectCategoria').select2('destroy');
         } catch (e) {
-            console.log('Error al destruir select2 en unmount:', e);
+            //console.log('Error al destruir select2 en unmount:', e);
         }
     }
 });

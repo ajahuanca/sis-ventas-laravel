@@ -1,619 +1,605 @@
 <template>
-    <div class="proveedor-module">
-        <!-- Vista de Tabla -->
-        <div v-show="!mostrarFormulario" class="fade-in">
-            <!-- Header con botones y filtros -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-4">
-                            <h5 class="mb-0">
-                                <i class="fas fa-truck text-primary me-2"></i>
-                                Gestión de Proveedores
-                            </h5>
-                            <small class="text-muted"
-                                >Administra tus proveedores y suministros</small
-                            >
-                        </div>
-                        <div class="col-md-8">
-                            <div class="d-flex justify-content-end gap-2">
-                                <button
-                                    class="btn btn-outline-info btn-sm"
-                                    @click="cargarDatos"
-                                >
-                                    <i class="fas fa-sync-alt me-1"></i
-                                    >Actualizar
-                                </button>
-                                <button
-                                    class="btn btn-primary"
-                                    @click="nuevoRegistro"
-                                >
-                                    <i class="fas fa-plus me-2"></i>Nuevo
-                                    Proveedor
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  <div class="proveedor-module">
+    <!-- Vista de Tabla -->
+    <div
+      v-show="!mostrarFormulario"
+      class="fade-in"
+    >
+      <!-- Header con botones y filtros -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-4">
+              <h5 class="mb-0">
+                <i class="fas fa-truck text-primary me-2" />
+                Gestión de Proveedores
+              </h5>
+              <small class="text-muted">Administra tus proveedores y suministros</small>
             </div>
-
-            <!-- Tabla de Proveedores -->
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <table
-                        id="tablaProveedores"
-                        class="table table-hover table-striped w-100"
-                    >
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Código</th>
-                                <th>Proveedor</th>
-                                <th>Documento</th>
-                                <th>Contacto</th>
-                                <th>Tipo/Rubro</th>
-                                <th>Calificación</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- DataTable cargará los datos aquí -->
-                        </tbody>
-                    </table>
-                </div>
+            <div class="col-md-8">
+              <div class="d-flex justify-content-end gap-2">
+                <button
+                  class="btn btn-outline-info btn-sm"
+                  @click="cargarDatos"
+                >
+                  <i class="fas fa-sync-alt me-1" />Actualizar
+                </button>
+                <button
+                  class="btn btn-primary"
+                  @click="nuevoRegistro"
+                >
+                  <i class="fas fa-plus me-2" />Nuevo
+                  Proveedor
+                </button>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
 
-        <!-- Vista de Formulario -->
-        <div v-show="mostrarFormulario" class="fade-in">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <div
-                        class="d-flex justify-content-between align-items-center"
-                    >
-                        <h5 class="mb-0">
-                            <i
-                                :class="
-                                    modoEdicion ? 'fas fa-edit' : 'fas fa-plus'
-                                "
-                                class="me-2"
-                            ></i>
-                            {{
-                                modoEdicion
-                                    ? "Editar Proveedor"
-                                    : "Nuevo Proveedor"
-                            }}
-                        </h5>
-                        <button
-                            class="btn btn-light btn-sm"
-                            @click="cancelarFormulario"
-                        >
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <form @submit.prevent="guardarProveedor">
-                        <!-- Sección: Datos de Empresa/Persona -->
-                        <div class="card mb-4">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-building me-2"></i>Datos de
-                                    Empresa/Persona
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <!-- Tipo de Documento -->
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label">
-                                            Tipo Doc.
-                                            <span class="text-danger">*</span>
-                                        </label>
-                                        <select
-                                            class="form-select"
-                                            :class="{
-                                                'is-invalid':
-                                                    errores.tipo_documento,
-                                            }"
-                                            v-model="formulario.tipo_documento"
-                                            @change="onTipoDocumentoChange"
-                                        >
-                                            <option value="DNI">DNI</option>
-                                            <option value="RUC">RUC</option>
-                                            <option value="CE">
-                                                Carnet Extranjería
-                                            </option>
-                                            <option value="PASAPORTE">
-                                                Pasaporte
-                                            </option>
-                                        </select>
-                                        <div
-                                            class="invalid-feedback"
-                                            v-if="errores.tipo_documento"
-                                        >
-                                            {{ errores.tipo_documento[0] }}
-                                        </div>
-                                    </div>
-
-                                    <!-- Número de Documento -->
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label">
-                                            N° Documento
-                                            <span class="text-danger">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            :class="{
-                                                'is-invalid':
-                                                    errores.numero_documento,
-                                            }"
-                                            v-model="
-                                                formulario.numero_documento
-                                            "
-                                            :placeholder="placeholderDocumento"
-                                            :maxlength="maxLengthDocumento"
-                                        />
-                                        <div
-                                            class="invalid-feedback"
-                                            v-if="errores.numero_documento"
-                                        >
-                                            {{ errores.numero_documento[0] }}
-                                        </div>
-                                    </div>
-
-                                    <!-- Nombres (para personas naturales) -->
-                                    <div
-                                        class="col-md-3 mb-3"
-                                        v-show="esPersonaNatural"
-                                    >
-                                        <label class="form-label">
-                                            Nombres
-                                            <span class="text-danger">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            :class="{
-                                                'is-invalid': errores.nombres,
-                                            }"
-                                            v-model="formulario.nombres"
-                                            placeholder="Nombres"
-                                            maxlength="100"
-                                        />
-                                        <div
-                                            class="invalid-feedback"
-                                            v-if="errores.nombres"
-                                        >
-                                            {{ errores.nombres[0] }}
-                                        </div>
-                                    </div>
-
-                                    <!-- Apellidos (para personas naturales) -->
-                                    <div
-                                        class="col-md-3 mb-3"
-                                        v-show="esPersonaNatural"
-                                    >
-                                        <label class="form-label">
-                                            Apellidos
-                                            <span class="text-danger">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            :class="{
-                                                'is-invalid': errores.apellidos,
-                                            }"
-                                            v-model="formulario.apellidos"
-                                            placeholder="Apellidos"
-                                            maxlength="100"
-                                        />
-                                        <div
-                                            class="invalid-feedback"
-                                            v-if="errores.apellidos"
-                                        >
-                                            {{ errores.apellidos[0] }}
-                                        </div>
-                                    </div>
-
-                                    <!-- Razón Social (para RUC) -->
-                                    <div
-                                        class="col-md-6 mb-3"
-                                        v-show="!esPersonaNatural"
-                                    >
-                                        <label class="form-label">
-                                            Razón Social
-                                            <span class="text-danger">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            :class="{
-                                                'is-invalid':
-                                                    errores.razon_social,
-                                            }"
-                                            v-model="formulario.razon_social"
-                                            placeholder="Razón Social de la Empresa"
-                                            maxlength="200"
-                                        />
-                                        <div
-                                            class="invalid-feedback"
-                                            v-if="errores.razon_social"
-                                        >
-                                            {{ errores.razon_social[0] }}
-                                        </div>
-                                    </div>
-
-                                    <!-- Email -->
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label">Email</label>
-                                        <input
-                                            type="email"
-                                            class="form-control"
-                                            :class="{
-                                                'is-invalid': errores.email,
-                                            }"
-                                            v-model="formulario.email"
-                                            placeholder="correo@ejemplo.com"
-                                        />
-                                        <div
-                                            class="invalid-feedback"
-                                            v-if="errores.email"
-                                        >
-                                            {{ errores.email[0] }}
-                                        </div>
-                                    </div>
-
-                                    <!-- Teléfono -->
-                                    <div class="col-md-2 mb-3">
-                                        <label class="form-label"
-                                            >Teléfono</label
-                                        >
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            v-model="formulario.telefono"
-                                            placeholder="(000) 000-0000"
-                                            maxlength="20"
-                                        />
-                                    </div>
-
-                                    <!-- Celular -->
-                                    <div class="col-md-2 mb-3">
-                                        <label class="form-label"
-                                            >Celular</label
-                                        >
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            v-model="formulario.celular"
-                                            placeholder="000-000-0000"
-                                            maxlength="20"
-                                        />
-                                    </div>
-
-                                    <!-- Dirección -->
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label"
-                                            >Dirección</label
-                                        >
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            v-model="formulario.direccion"
-                                            placeholder="Calle, Número, Zona"
-                                            maxlength="250"
-                                        />
-                                    </div>
-
-                                    <!-- Ciudad -->
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label">Ciudad</label>
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            v-model="formulario.ciudad"
-                                            placeholder="Ciudad"
-                                            maxlength="100"
-                                        />
-                                    </div>
-
-                                    <!-- Provincia/Departamento -->
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label"
-                                            >Provincia/Depto</label
-                                        >
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            v-model="formulario.provincia"
-                                            placeholder="Provincia"
-                                            maxlength="100"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Sección: Datos de Proveedor -->
-                        <div class="card mb-4">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-clipboard-list me-2"></i
-                                    >Datos de Proveedor
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <!-- Código Proveedor -->
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label"
-                                            >Código Proveedor</label
-                                        >
-                                        <input
-                                            type="text"
-                                            class="form-control bg-light"
-                                            v-model="formulario.codigo"
-                                            readonly
-                                        />
-                                    </div>
-
-                                    <!-- Tipo Proveedor -->
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label">
-                                            Tipo Proveedor
-                                            <span class="text-danger">*</span>
-                                        </label>
-                                        <select
-                                            class="form-select"
-                                            :class="{
-                                                'is-invalid':
-                                                    errores.tipo_proveedor,
-                                            }"
-                                            v-model="formulario.tipo_proveedor"
-                                        >
-                                            <option value="Producto">
-                                                Producto
-                                            </option>
-                                            <option value="Servicio">
-                                                Servicio
-                                            </option>
-                                            <option value="Ambos">Ambos</option>
-                                        </select>
-                                        <div
-                                            class="invalid-feedback"
-                                            v-if="errores.tipo_proveedor"
-                                        >
-                                            {{ errores.tipo_proveedor[0] }}
-                                        </div>
-                                    </div>
-
-                                    <!-- Rubro -->
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label">Rubro</label>
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            v-model="formulario.rubro"
-                                            placeholder="Ej: Tecnología, Alimentos"
-                                            maxlength="150"
-                                        />
-                                    </div>
-
-                                    <!-- Calificación -->
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label"
-                                            >Calificación</label
-                                        >
-                                        <select
-                                            class="form-select"
-                                            v-model="formulario.calificacion"
-                                        >
-                                            <option :value="5">
-                                                Sobresaliente
-                                            </option>
-                                            <option :value="4">
-                                                Excelente
-                                            </option>
-                                            <option :value="3">Bueno</option>
-                                            <option :value="2">Regular</option>
-                                            <option :value="1">Malo</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- Límite de Crédito -->
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label"
-                                            >Límite de Crédito (nos
-                                            otorgan)</label
-                                        >
-                                        <div class="input-group">
-                                            <span class="input-group-text"
-                                                >$</span
-                                            >
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                class="form-control"
-                                                v-model="
-                                                    formulario.limite_credito
-                                                "
-                                                placeholder="0.00"
-                                                min="0"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <!-- Días de Crédito -->
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label"
-                                            >Días de Crédito</label
-                                        >
-                                        <input
-                                            type="number"
-                                            class="form-control"
-                                            v-model="formulario.dias_credito"
-                                            placeholder="0"
-                                            min="0"
-                                            max="365"
-                                        />
-                                    </div>
-
-                                    <!-- Descuento General -->
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label"
-                                            >Descuento General (%)</label
-                                        >
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            class="form-control"
-                                            v-model="
-                                                formulario.descuento_general
-                                            "
-                                            placeholder="0.00"
-                                            min="0"
-                                            max="100"
-                                        />
-                                    </div>
-
-                                    <!-- Banco -->
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label">Banco</label>
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            v-model="formulario.banco"
-                                            placeholder="Nombre del banco"
-                                            maxlength="100"
-                                        />
-                                    </div>
-
-                                    <!-- Cuenta Bancaria -->
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label"
-                                            >Cuenta Bancaria</label
-                                        >
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            v-model="formulario.cuenta_bancaria"
-                                            placeholder="Número de cuenta"
-                                            maxlength="50"
-                                        />
-                                    </div>
-
-                                    <!-- Observaciones -->
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label"
-                                            >Observaciones</label
-                                        >
-                                        <textarea
-                                            class="form-control"
-                                            v-model="formulario.observaciones"
-                                            placeholder="Notas adicionales sobre el proveedor"
-                                            rows="2"
-                                        ></textarea>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Sección: Persona de Contacto -->
-                        <div class="card mb-4">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-user-tie me-2"></i>Persona
-                                    de Contacto
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <!-- Nombre Contacto -->
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label"
-                                            >Nombre Completo</label
-                                        >
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            v-model="formulario.nombre_contacto"
-                                            placeholder="Nombre del contacto"
-                                            maxlength="150"
-                                        />
-                                    </div>
-
-                                    <!-- Cargo Contacto -->
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label">Cargo</label>
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            v-model="formulario.cargo_contacto"
-                                            placeholder="Ej: Gerente de Ventas"
-                                            maxlength="100"
-                                        />
-                                    </div>
-
-                                    <!-- Teléfono Contacto -->
-                                    <div class="col-md-2 mb-3">
-                                        <label class="form-label"
-                                            >Teléfono</label
-                                        >
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            v-model="
-                                                formulario.telefono_contacto
-                                            "
-                                            placeholder="000-000-0000"
-                                            maxlength="20"
-                                        />
-                                    </div>
-
-                                    <!-- Email Contacto -->
-                                    <div class="col-md-2 mb-3">
-                                        <label class="form-label">Email</label>
-                                        <input
-                                            type="email"
-                                            class="form-control"
-                                            v-model="formulario.email_contacto"
-                                            placeholder="email@ejemplo.com"
-                                            maxlength="150"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Botones -->
-                        <div class="d-flex justify-content-end gap-2">
-                            <button
-                                type="button"
-                                class="btn btn-secondary"
-                                @click="cancelarFormulario"
-                            >
-                                <i class="fas fa-times me-2"></i>Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                class="btn btn-primary"
-                                :disabled="guardando"
-                            >
-                                <i class="fas fa-save me-2"></i>
-                                {{
-                                    guardando
-                                        ? "Guardando..."
-                                        : "Guardar Proveedor"
-                                }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+      <!-- Tabla de Proveedores -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <table
+            id="tablaProveedores"
+            class="table table-hover table-striped w-100"
+          >
+            <thead class="table-dark">
+              <tr>
+                <th>Código</th>
+                <th>Proveedor</th>
+                <th>Documento</th>
+                <th>Contacto</th>
+                <th>Tipo/Rubro</th>
+                <th>Calificación</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- DataTable cargará los datos aquí -->
+            </tbody>
+          </table>
         </div>
+      </div>
     </div>
+
+    <!-- Vista de Formulario -->
+    <div
+      v-show="mostrarFormulario"
+      class="fade-in"
+    >
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <div
+            class="d-flex justify-content-between align-items-center"
+          >
+            <h5 class="mb-0">
+              <i
+                :class="
+                  modoEdicion ? 'fas fa-edit' : 'fas fa-plus'
+                "
+                class="me-2"
+              />
+              {{
+                modoEdicion
+                  ? "Editar Proveedor"
+                  : "Nuevo Proveedor"
+              }}
+            </h5>
+            <button
+              class="btn btn-light btn-sm"
+              @click="cancelarFormulario"
+            >
+              <i class="fas fa-times" />
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <form @submit.prevent="guardarProveedor">
+            <!-- Sección: Datos de Empresa/Persona -->
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">
+                  <i class="fas fa-building me-2" />Datos de
+                  Empresa/Persona
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <!-- Tipo de Documento -->
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">
+                      Tipo Doc.
+                      <span class="text-danger">*</span>
+                    </label>
+                    <select
+                      v-model="formulario.tipo_documento"
+                      class="form-select"
+                      :class="{
+                        'is-invalid':
+                          errores.tipo_documento,
+                      }"
+                      @change="onTipoDocumentoChange"
+                    >
+                      <option value="DNI">
+                        DNI
+                      </option>
+                      <option value="RUC">
+                        RUC
+                      </option>
+                      <option value="CE">
+                        Carnet Extranjería
+                      </option>
+                      <option value="PASAPORTE">
+                        Pasaporte
+                      </option>
+                    </select>
+                    <div
+                      v-if="errores.tipo_documento"
+                      class="invalid-feedback"
+                    >
+                      {{ errores.tipo_documento[0] }}
+                    </div>
+                  </div>
+
+                  <!-- Número de Documento -->
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">
+                      N° Documento
+                      <span class="text-danger">*</span>
+                    </label>
+                    <input
+                      v-model="
+                        formulario.numero_documento
+                      "
+                      type="text"
+                      class="form-control"
+                      :class="{
+                        'is-invalid':
+                          errores.numero_documento,
+                      }"
+                      :placeholder="placeholderDocumento"
+                      :maxlength="maxLengthDocumento"
+                    >
+                    <div
+                      v-if="errores.numero_documento"
+                      class="invalid-feedback"
+                    >
+                      {{ errores.numero_documento[0] }}
+                    </div>
+                  </div>
+
+                  <!-- Nombres (para personas naturales) -->
+                  <div
+                    v-show="esPersonaNatural"
+                    class="col-md-3 mb-3"
+                  >
+                    <label class="form-label">
+                      Nombres
+                      <span class="text-danger">*</span>
+                    </label>
+                    <input
+                      v-model="formulario.nombres"
+                      type="text"
+                      class="form-control"
+                      :class="{
+                        'is-invalid': errores.nombres,
+                      }"
+                      placeholder="Nombres"
+                      maxlength="100"
+                    >
+                    <div
+                      v-if="errores.nombres"
+                      class="invalid-feedback"
+                    >
+                      {{ errores.nombres[0] }}
+                    </div>
+                  </div>
+
+                  <!-- Apellidos (para personas naturales) -->
+                  <div
+                    v-show="esPersonaNatural"
+                    class="col-md-3 mb-3"
+                  >
+                    <label class="form-label">
+                      Apellidos
+                      <span class="text-danger">*</span>
+                    </label>
+                    <input
+                      v-model="formulario.apellidos"
+                      type="text"
+                      class="form-control"
+                      :class="{
+                        'is-invalid': errores.apellidos,
+                      }"
+                      placeholder="Apellidos"
+                      maxlength="100"
+                    >
+                    <div
+                      v-if="errores.apellidos"
+                      class="invalid-feedback"
+                    >
+                      {{ errores.apellidos[0] }}
+                    </div>
+                  </div>
+
+                  <!-- Razón Social (para RUC) -->
+                  <div
+                    v-show="!esPersonaNatural"
+                    class="col-md-6 mb-3"
+                  >
+                    <label class="form-label">
+                      Razón Social
+                      <span class="text-danger">*</span>
+                    </label>
+                    <input
+                      v-model="formulario.razon_social"
+                      type="text"
+                      class="form-control"
+                      :class="{
+                        'is-invalid':
+                          errores.razon_social,
+                      }"
+                      placeholder="Razón Social de la Empresa"
+                      maxlength="200"
+                    >
+                    <div
+                      v-if="errores.razon_social"
+                      class="invalid-feedback"
+                    >
+                      {{ errores.razon_social[0] }}
+                    </div>
+                  </div>
+
+                  <!-- Email -->
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Email</label>
+                    <input
+                      v-model="formulario.email"
+                      type="email"
+                      class="form-control"
+                      :class="{
+                        'is-invalid': errores.email,
+                      }"
+                      placeholder="correo@ejemplo.com"
+                    >
+                    <div
+                      v-if="errores.email"
+                      class="invalid-feedback"
+                    >
+                      {{ errores.email[0] }}
+                    </div>
+                  </div>
+
+                  <!-- Teléfono -->
+                  <div class="col-md-2 mb-3">
+                    <label class="form-label">Teléfono</label>
+                    <input
+                      v-model="formulario.telefono"
+                      type="text"
+                      class="form-control"
+                      placeholder="(000) 000-0000"
+                      maxlength="20"
+                    >
+                  </div>
+
+                  <!-- Celular -->
+                  <div class="col-md-2 mb-3">
+                    <label class="form-label">Celular</label>
+                    <input
+                      v-model="formulario.celular"
+                      type="text"
+                      class="form-control"
+                      placeholder="000-000-0000"
+                      maxlength="20"
+                    >
+                  </div>
+
+                  <!-- Dirección -->
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Dirección</label>
+                    <input
+                      v-model="formulario.direccion"
+                      type="text"
+                      class="form-control"
+                      placeholder="Calle, Número, Zona"
+                      maxlength="250"
+                    >
+                  </div>
+
+                  <!-- Ciudad -->
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">Ciudad</label>
+                    <input
+                      v-model="formulario.ciudad"
+                      type="text"
+                      class="form-control"
+                      placeholder="Ciudad"
+                      maxlength="100"
+                    >
+                  </div>
+
+                  <!-- Provincia/Departamento -->
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">Provincia/Depto</label>
+                    <input
+                      v-model="formulario.provincia"
+                      type="text"
+                      class="form-control"
+                      placeholder="Provincia"
+                      maxlength="100"
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sección: Datos de Proveedor -->
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">
+                  <i class="fas fa-clipboard-list me-2" />Datos de Proveedor
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <!-- Código Proveedor -->
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">Código Proveedor</label>
+                    <input
+                      v-model="formulario.codigo"
+                      type="text"
+                      class="form-control bg-light"
+                      readonly
+                    >
+                  </div>
+
+                  <!-- Tipo Proveedor -->
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">
+                      Tipo Proveedor
+                      <span class="text-danger">*</span>
+                    </label>
+                    <select
+                      v-model="formulario.tipo_proveedor"
+                      class="form-select"
+                      :class="{
+                        'is-invalid':
+                          errores.tipo_proveedor,
+                      }"
+                    >
+                      <option value="Producto">
+                        Producto
+                      </option>
+                      <option value="Servicio">
+                        Servicio
+                      </option>
+                      <option value="Ambos">
+                        Ambos
+                      </option>
+                    </select>
+                    <div
+                      v-if="errores.tipo_proveedor"
+                      class="invalid-feedback"
+                    >
+                      {{ errores.tipo_proveedor[0] }}
+                    </div>
+                  </div>
+
+                  <!-- Rubro -->
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">Rubro</label>
+                    <input
+                      v-model="formulario.rubro"
+                      type="text"
+                      class="form-control"
+                      placeholder="Ej: Tecnología, Alimentos"
+                      maxlength="150"
+                    >
+                  </div>
+
+                  <!-- Calificación -->
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">Calificación</label>
+                    <select
+                      v-model="formulario.calificacion"
+                      class="form-select"
+                    >
+                      <option :value="5">
+                        Sobresaliente
+                      </option>
+                      <option :value="4">
+                        Excelente
+                      </option>
+                      <option :value="3">
+                        Bueno
+                      </option>
+                      <option :value="2">
+                        Regular
+                      </option>
+                      <option :value="1">
+                        Malo
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Límite de Crédito -->
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">Límite de Crédito (nos
+                      otorgan)</label>
+                    <div class="input-group">
+                      <span class="input-group-text">$</span>
+                      <input
+                        v-model="
+                          formulario.limite_credito
+                        "
+                        type="number"
+                        step="0.01"
+                        class="form-control"
+                        placeholder="0.00"
+                        min="0"
+                      >
+                    </div>
+                  </div>
+
+                  <!-- Días de Crédito -->
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">Días de Crédito</label>
+                    <input
+                      v-model="formulario.dias_credito"
+                      type="number"
+                      class="form-control"
+                      placeholder="0"
+                      min="0"
+                      max="365"
+                    >
+                  </div>
+
+                  <!-- Descuento General -->
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">Descuento General (%)</label>
+                    <input
+                      v-model="
+                        formulario.descuento_general
+                      "
+                      type="number"
+                      step="0.01"
+                      class="form-control"
+                      placeholder="0.00"
+                      min="0"
+                      max="100"
+                    >
+                  </div>
+
+                  <!-- Banco -->
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">Banco</label>
+                    <input
+                      v-model="formulario.banco"
+                      type="text"
+                      class="form-control"
+                      placeholder="Nombre del banco"
+                      maxlength="100"
+                    >
+                  </div>
+
+                  <!-- Cuenta Bancaria -->
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Cuenta Bancaria</label>
+                    <input
+                      v-model="formulario.cuenta_bancaria"
+                      type="text"
+                      class="form-control"
+                      placeholder="Número de cuenta"
+                      maxlength="50"
+                    >
+                  </div>
+
+                  <!-- Observaciones -->
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Observaciones</label>
+                    <textarea
+                      v-model="formulario.observaciones"
+                      class="form-control"
+                      placeholder="Notas adicionales sobre el proveedor"
+                      rows="2"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sección: Persona de Contacto -->
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">
+                  <i class="fas fa-user-tie me-2" />Persona
+                  de Contacto
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <!-- Nombre Contacto -->
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Nombre Completo</label>
+                    <input
+                      v-model="formulario.nombre_contacto"
+                      type="text"
+                      class="form-control"
+                      placeholder="Nombre del contacto"
+                      maxlength="150"
+                    >
+                  </div>
+
+                  <!-- Cargo Contacto -->
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Cargo</label>
+                    <input
+                      v-model="formulario.cargo_contacto"
+                      type="text"
+                      class="form-control"
+                      placeholder="Ej: Gerente de Ventas"
+                      maxlength="100"
+                    >
+                  </div>
+
+                  <!-- Teléfono Contacto -->
+                  <div class="col-md-2 mb-3">
+                    <label class="form-label">Teléfono</label>
+                    <input
+                      v-model="
+                        formulario.telefono_contacto
+                      "
+                      type="text"
+                      class="form-control"
+                      placeholder="000-000-0000"
+                      maxlength="20"
+                    >
+                  </div>
+
+                  <!-- Email Contacto -->
+                  <div class="col-md-2 mb-3">
+                    <label class="form-label">Email</label>
+                    <input
+                      v-model="formulario.email_contacto"
+                      type="email"
+                      class="form-control"
+                      placeholder="email@ejemplo.com"
+                      maxlength="150"
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex justify-content-end gap-2">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                @click="cancelarFormulario"
+              >
+                <i class="fas fa-times me-2" />Cancelar
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                :disabled="guardando"
+              >
+                <i class="fas fa-save me-2" />
+                {{
+                  guardando
+                    ? "Guardando..."
+                    : "Guardar Proveedor"
+                }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -692,7 +678,7 @@ const maxLengthDocumento = computed(() => {
 const inicializarDataTable = () => {
     setTimeout(() => {
         if (!$ || !$.fn || !$.fn.DataTable) {
-            console.error("DataTables no está disponible");
+            //console.error("DataTables no está disponible");
             setTimeout(inicializarDataTable, 500);
             return;
         }
@@ -714,7 +700,7 @@ const inicializarDataTable = () => {
                     return [];
                 },
                 error: function (xhr, error, thrown) {
-                    console.error("Error al cargar datos:", error);
+                    //console.error("Error al cargar datos:", error);
                     Swal.fire({
                         icon: "error",
                         title: "Error",
@@ -947,7 +933,7 @@ const nuevoRegistro = async () => {
             formulario.value.codigo = response.data.data.codigo;
         }
     } catch (error) {
-        console.error("Error al generar código:", error);
+        //console.error("Error al generar código:", error);
     }
 };
 
@@ -996,7 +982,7 @@ const editarProveedor = async (id) => {
             mostrarFormulario.value = true;
         }
     } catch (error) {
-        console.error("Error al editar:", error);
+        //console.error("Error al editar:", error);
         Swal.fire({
             icon: "error",
             title: "Error",
@@ -1033,7 +1019,7 @@ const guardarProveedor = async () => {
             dataTable.value.ajax.reload();
         }
     } catch (error) {
-        console.error("Error al guardar:", error);
+        //console.error("Error al guardar:", error);
         if (error.response?.status === 422) {
             errores.value = error.response.data.errors || {};
             Swal.fire({
@@ -1087,7 +1073,7 @@ const toggleEstado = async (id, esActivar) => {
                 dataTable.value.ajax.reload(null, false);
             }
         } catch (error) {
-            console.error("Error al cambiar estado:", error);
+            //console.error("Error al cambiar estado:", error);
             Swal.fire({
                 icon: "error",
                 title: "Error",

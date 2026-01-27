@@ -1,191 +1,263 @@
 <template>
-    <div class="usuario-module">
-        <!-- Vista de Tabla -->
-        <div v-show="!mostrarFormulario" class="fade-in">
-            <!-- Header -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-4">
-                            <h5 class="mb-0">
-                                <i class="fas fa-users text-info me-2"></i>
-                                Gestión de Usuarios
-                            </h5>
-                            <small class="text-muted">Administra los usuarios del sistema</small>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="d-flex justify-content-end gap-2 flex-wrap">
-                                <select class="form-select form-select-sm" style="width: 150px;" v-model="filtros.estado" @change="aplicarFiltros">
-                                    <option value="">Todos</option>
-                                    <option value="true">Activos</option>
-                                    <option value="false">Inactivos</option>
-                                </select>
-                                <button class="btn btn-outline-info btn-sm" @click="cargarDatos">
-                                    <i class="fas fa-sync-alt me-1"></i>Actualizar
-                                </button>
-                                <button class="btn btn-info" @click="nuevoRegistro">
-                                    <i class="fas fa-plus me-2"></i>Nuevo Usuario
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  <div class="usuario-module">
+    <!-- Vista de Tabla -->
+    <div
+      v-show="!mostrarFormulario"
+      class="fade-in"
+    >
+      <!-- Header -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-4">
+              <h5 class="mb-0">
+                <i class="fas fa-users text-info me-2" />
+                Gestión de Usuarios
+              </h5>
+              <small class="text-muted">Administra los usuarios del sistema</small>
             </div>
-
-            <!-- Tabla -->
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <table id="tablaUsuarios" class="table table-hover table-striped w-100">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>ID</th>
-                                <th>Nombre</th>
-                                <th>Email</th>
-                                <th>Roles</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
+            <div class="col-md-8">
+              <div class="d-flex justify-content-end gap-2 flex-wrap">
+                <select
+                  v-model="filtros.estado"
+                  class="form-select form-select-sm"
+                  style="width: 150px;"
+                  @change="aplicarFiltros"
+                >
+                  <option value="">
+                    Todos
+                  </option>
+                  <option value="true">
+                    Activos
+                  </option>
+                  <option value="false">
+                    Inactivos
+                  </option>
+                </select>
+                <button
+                  class="btn btn-outline-info btn-sm"
+                  @click="cargarDatos"
+                >
+                  <i class="fas fa-sync-alt me-1" />Actualizar
+                </button>
+                <button
+                  class="btn btn-info"
+                  @click="nuevoRegistro"
+                >
+                  <i class="fas fa-plus me-2" />Nuevo Usuario
+                </button>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
 
-        <!-- Vista de Formulario -->
-        <div v-show="mostrarFormulario" class="fade-in">
-            <div class="card shadow-sm">
-                <div class="card-header bg-info text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i :class="modoEdicion ? 'fas fa-edit' : 'fas fa-plus'" class="me-2"></i>
-                            {{ modoEdicion ? 'Editar Usuario' : 'Nuevo Usuario' }}
-                        </h5>
-                        <button class="btn btn-light btn-sm" @click="cancelarFormulario">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <form @submit.prevent="guardarUsuario">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">
-                                    Nombre <span class="text-danger">*</span>
-                                </label>
-                                <input 
-                                    type="text" 
-                                    class="form-control"
-                                    :class="{ 'is-invalid': errores.name }"
-                                    v-model="formulario.name"
-                                    placeholder="Nombre completo"
-                                    maxlength="255"
-                                >
-                                <div class="invalid-feedback" v-if="errores.name">
-                                    {{ errores.name[0] }}
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">
-                                    Email <span class="text-danger">*</span>
-                                </label>
-                                <input 
-                                    type="email" 
-                                    class="form-control"
-                                    :class="{ 'is-invalid': errores.email }"
-                                    v-model="formulario.email"
-                                    placeholder="correo@ejemplo.com"
-                                    maxlength="255"
-                                >
-                                <div class="invalid-feedback" v-if="errores.email">
-                                    {{ errores.email[0] }}
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">
-                                    Contraseña {{ modoEdicion ? '(dejar vacío para mantener)' : '' }}
-                                    <span class="text-danger" v-if="!modoEdicion">*</span>
-                                </label>
-                                <input 
-                                    type="password" 
-                                    class="form-control"
-                                    :class="{ 'is-invalid': errores.password }"
-                                    v-model="formulario.password"
-                                    placeholder="••••••••"
-                                    minlength="6"
-                                >
-                                <div class="invalid-feedback" v-if="errores.password">
-                                    {{ errores.password[0] }}
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">
-                                    Confirmar Contraseña
-                                    <span class="text-danger" v-if="!modoEdicion">*</span>
-                                </label>
-                                <input 
-                                    type="password" 
-                                    class="form-control"
-                                    v-model="formulario.password_confirmation"
-                                    placeholder="••••••••"
-                                >
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Estado</label>
-                                <select class="form-select" v-model="formulario.estado">
-                                    <option :value="true">Activo</option>
-                                    <option :value="false">Inactivo</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Sección de Roles -->
-                        <div class="card mb-4">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-user-tag me-2"></i>Roles del Usuario
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-4 mb-2" v-for="rol in roles" :key="rol.id">
-                                        <div class="form-check">
-                                            <input 
-                                                class="form-check-input" 
-                                                type="checkbox"
-                                                :id="'rol-' + rol.id"
-                                                :value="rol.id"
-                                                v-model="formulario.roles"
-                                            >
-                                            <label class="form-check-label" :for="'rol-' + rol.id">
-                                                <strong>{{ rol.nombre }}</strong>
-                                                <small class="text-muted d-block">{{ rol.descripcion }}</small>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                                <p class="text-muted small mb-0" v-if="roles.length === 0">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    No hay roles disponibles. Crea roles desde el módulo de Roles.
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Botones -->
-                        <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-secondary" @click="cancelarFormulario">
-                                <i class="fas fa-times me-2"></i>Cancelar
-                            </button>
-                            <button type="submit" class="btn btn-info" :disabled="guardando">
-                                <i class="fas fa-save me-2"></i>
-                                {{ guardando ? 'Guardando...' : 'Guardar Usuario' }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+      <!-- Tabla -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <table
+            id="tablaUsuarios"
+            class="table table-hover table-striped w-100"
+          >
+            <thead class="table-dark">
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Roles</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody />
+          </table>
         </div>
+      </div>
     </div>
+
+    <!-- Vista de Formulario -->
+    <div
+      v-show="mostrarFormulario"
+      class="fade-in"
+    >
+      <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i
+                :class="modoEdicion ? 'fas fa-edit' : 'fas fa-plus'"
+                class="me-2"
+              />
+              {{ modoEdicion ? 'Editar Usuario' : 'Nuevo Usuario' }}
+            </h5>
+            <button
+              class="btn btn-light btn-sm"
+              @click="cancelarFormulario"
+            >
+              <i class="fas fa-times" />
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <form @submit.prevent="guardarUsuario">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">
+                  Nombre <span class="text-danger">*</span>
+                </label>
+                <input 
+                  v-model="formulario.name" 
+                  type="text"
+                  class="form-control"
+                  :class="{ 'is-invalid': errores.name }"
+                  placeholder="Nombre completo"
+                  maxlength="255"
+                >
+                <div
+                  v-if="errores.name"
+                  class="invalid-feedback"
+                >
+                  {{ errores.name[0] }}
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">
+                  Email <span class="text-danger">*</span>
+                </label>
+                <input 
+                  v-model="formulario.email" 
+                  type="email"
+                  class="form-control"
+                  :class="{ 'is-invalid': errores.email }"
+                  placeholder="correo@ejemplo.com"
+                  maxlength="255"
+                >
+                <div
+                  v-if="errores.email"
+                  class="invalid-feedback"
+                >
+                  {{ errores.email[0] }}
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">
+                  Contraseña {{ modoEdicion ? '(dejar vacío para mantener)' : '' }}
+                  <span
+                    v-if="!modoEdicion"
+                    class="text-danger"
+                  >*</span>
+                </label>
+                <input 
+                  v-model="formulario.password" 
+                  type="password"
+                  class="form-control"
+                  :class="{ 'is-invalid': errores.password }"
+                  placeholder="••••••••"
+                  minlength="6"
+                >
+                <div
+                  v-if="errores.password"
+                  class="invalid-feedback"
+                >
+                  {{ errores.password[0] }}
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">
+                  Confirmar Contraseña
+                  <span
+                    v-if="!modoEdicion"
+                    class="text-danger"
+                  >*</span>
+                </label>
+                <input 
+                  v-model="formulario.password_confirmation" 
+                  type="password"
+                  class="form-control"
+                  placeholder="••••••••"
+                >
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Estado</label>
+                <select
+                  v-model="formulario.estado"
+                  class="form-select"
+                >
+                  <option :value="true">
+                    Activo
+                  </option>
+                  <option :value="false">
+                    Inactivo
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Sección de Roles -->
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">
+                  <i class="fas fa-user-tag me-2" />Roles del Usuario
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div
+                    v-for="rol in roles"
+                    :key="rol.id"
+                    class="col-md-4 mb-2"
+                  >
+                    <div class="form-check">
+                      <input 
+                        :id="'rol-' + rol.id" 
+                        v-model="formulario.roles"
+                        class="form-check-input"
+                        type="checkbox"
+                        :value="rol.id"
+                      >
+                      <label
+                        class="form-check-label"
+                        :for="'rol-' + rol.id"
+                      >
+                        <strong>{{ rol.nombre }}</strong>
+                        <small class="text-muted d-block">{{ rol.descripcion }}</small>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <p
+                  v-if="roles.length === 0"
+                  class="text-muted small mb-0"
+                >
+                  <i class="fas fa-info-circle me-1" />
+                  No hay roles disponibles. Crea roles desde el módulo de Roles.
+                </p>
+              </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex justify-content-end gap-2">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                @click="cancelarFormulario"
+              >
+                <i class="fas fa-times me-2" />Cancelar
+              </button>
+              <button
+                type="submit"
+                class="btn btn-info"
+                :disabled="guardando"
+              >
+                <i class="fas fa-save me-2" />
+                {{ guardando ? 'Guardando...' : 'Guardar Usuario' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>

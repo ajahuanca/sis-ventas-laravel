@@ -72,15 +72,19 @@ jobs:
       # Gate real de cobertura
       - name: "Gate: Enforce minimum coverage (80%)"
         run: |
-          php -r "
-            $xml = simplexml_load_file('coverage.xml');
-            $metrics = $xml->xpath('//metrics')[0];
-            $covered = (int)$metrics['coveredstatements'];
-            $total = (int)$metrics['statements'];
-            $pct = $total ? ($covered / $total) * 100 : 0;
-            echo 'Coverage: ' . round($pct, 2) . \"%\n\";
-            if ($pct < 80) { fwrite(STDERR, \"Coverage below 80%.\n\"); exit(1); }
-          "
+          php <<'PHP'
+          <?php
+          $min = 80;
+          $xml = simplexml_load_file('coverage.xml');
+          $covered = 0; $total = 0;
+          foreach ($xml->xpath('//metrics') as $m) {
+            $covered += (int)($m['coveredstatements'] ?? 0);
+            $total += (int)($m['statements'] ?? 0);
+          }
+          $pct = $total ? ($covered / $total) * 100 : 0;
+          echo "Coverage: ".round($pct,2)."%\n";
+          exit($pct < $min ? 1 : 0);
+          PHP
 
       - name: Upload backend coverage
         uses: actions/upload-artifact@v4

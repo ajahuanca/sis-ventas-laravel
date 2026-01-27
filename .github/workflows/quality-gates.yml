@@ -1,0 +1,143 @@
+name: Quality Gates
+
+on:
+  push:
+    branches: ["main", "develop", "feature/**", "ci-**"]
+  pull_request:
+    branches: ["main", "develop"]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# JOBS Separados
+jobs:
+  # JOB Para el BACKEND
+  backend-quality:
+    name: Backend Quality (Laravel)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, pdo_pgsql
+          coverage: xdebug
+          tools: composer:v2
+
+      - name: Validate composer.json
+        run: composer validate --no-interaction --strict
+
+      - name: Get Composer cache dir
+        id: composercache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composercache.outputs.dir }}
+          key: composer-cache-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-cache-${{ runner.os }}-
+
+      - name: Install dependencies (locked)
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Gate: Code style (Pint)
+        run: ./vendor/bin/pint --test
+
+      - name: Prepare test env (SQLite)
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          mkdir -p database
+          touch database/database.sqlite
+          php artisan config:clear
+
+      - name: Gate: Security audit (Composer)
+        run: composer audit --no-interaction
+
+      - name: Gate: Tests + Coverage
+        run: |
+          php artisan test --coverage-clover=coverage.xml
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
+
+      # Gate real de cobertura (ejemplo simple con php)
+      - name: Gate: Enforce minimum coverage (80%)
+        run: |
+          php -r "
+            $xml = simplexml_load_file('coverage.xml');
+            $metrics = $xml->xpath('//metrics')[0];
+            $covered = (int)$metrics['coveredstatements'];
+            $total = (int)$metrics['statements'];
+            $pct = $total ? ($covered / $total) * 100 : 0;
+            echo 'Coverage: ' . round($pct, 2) . \"%\n\";
+            if ($pct < 80) { fwrite(STDERR, \"Coverage below 80%.\n\"); exit(1); }
+          "
+
+      - name: Upload backend coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage
+          path: coverage.xml
+          retention-days: 7
+
+  # JOB Para el FRONTEND
+  frontend-quality:
+    name: Frontend Quality (Vue/Vite)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies (locked)
+        run: npm ci
+
+      - name: Gate: Lint (ESLint)
+        run: npm run lint
+
+      - name: Gate: Unit tests (Vitest)
+        run: npm run test
+
+      - name: Gate: Build (Vite)
+        run: npm run build
+
+      - name: Security audit (npm) - soft gate
+        id: npmaudit
+        run: |
+          npm audit --audit-level=high
+        continue-on-error: true
+
+  summary:
+    name: Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [backend-quality, frontend-quality]
+    if: always()
+
+    steps:
+      - name: Write summary
+        run: |
+          echo "## 📊 Quality Gates Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend | ${{ needs.backend-quality.result == 'success' && '✅ PASSED' || '❌ FAILED' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend | ${{ needs.frontend-quality.result == 'success' && '✅ PASSED' || '❌ FAILED' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY

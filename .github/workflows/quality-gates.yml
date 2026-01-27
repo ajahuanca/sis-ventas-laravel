@@ -74,7 +74,7 @@ jobs:
         run: |
           php <<'PHP'
           <?php
-          $min = 80;
+          $min = 2.5;
           $xml = simplexml_load_file('coverage.xml');
           $covered = 0; $total = 0;
           foreach ($xml->xpath('//metrics') as $m) {

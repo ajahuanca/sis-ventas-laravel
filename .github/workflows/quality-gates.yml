@@ -69,7 +69,7 @@ jobs:
           DB_CONNECTION: sqlite
           DB_DATABASE: database/database.sqlite
 
-      # Gate real de cobertura (ejemplo simple con php)
+      # Gate real de cobertura
       - name: Gate: Enforce minimum coverage (80%)
         run: |
           php -r "
@@ -123,6 +123,7 @@ jobs:
           npm audit --audit-level=high
         continue-on-error: true
 
+  # JOB Resultado 
   summary:
     name: Pipeline Summary
     runs-on: ubuntu-latest

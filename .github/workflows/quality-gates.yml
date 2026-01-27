@@ -48,7 +48,7 @@ jobs:
       - name: Install dependencies (locked)
         run: composer install --no-interaction --no-progress --prefer-dist
 
-      - name: Gate: Code style (Pint)
+      - name: "Gate: Code style (Pint)"
         run: ./vendor/bin/pint --test
 
       - name: Prepare test env (SQLite)
@@ -59,10 +59,10 @@ jobs:
           touch database/database.sqlite
           php artisan config:clear
 
-      - name: Gate: Security audit (Composer)
+      - name: "Gate: Security audit (Composer)"
         run: composer audit --no-interaction
 
-      - name: Gate: Tests + Coverage
+      - name: "Gate: Tests + Coverage"
         run: |
           php artisan test --coverage-clover=coverage.xml
         env:
@@ -70,7 +70,7 @@ jobs:
           DB_DATABASE: database/database.sqlite
 
       # Gate real de cobertura
-      - name: Gate: Enforce minimum coverage (80%)
+      - name: "Gate: Enforce minimum coverage (80%)"
         run: |
           php -r "
             $xml = simplexml_load_file('coverage.xml');
@@ -108,16 +108,16 @@ jobs:
       - name: Install dependencies (locked)
         run: npm ci
 
-      - name: Gate: Lint (ESLint)
+      - name: "Gate: Lint (ESLint)"
         run: npm run lint
 
-      - name: Gate: Unit tests (Vitest)
+      - name: "Gate: Unit tests (Vitest)"
         run: npm run test
 
-      - name: Gate: Build (Vite)
+      - name: "Gate: Build (Vite)"
         run: npm run build
 
-      - name: Security audit (npm) - soft gate
+      - name: "Security audit (npm) - soft gate"
         id: npmaudit
         run: |
           npm audit --audit-level=high

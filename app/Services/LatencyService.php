@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-
 final class LatencyService
 {
     public static function ms(int $startNs, int $endNs): float

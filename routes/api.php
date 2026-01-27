@@ -14,8 +14,6 @@ use App\Http\Controllers\Api\VentaController;
 use App\Http\Controllers\HealthController;
 use Illuminate\Support\Facades\Route;
 
-
-
 /*
 * API Route Health
 */

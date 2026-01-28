@@ -5,7 +5,7 @@ on:
   workflow_run:
     workflows: ["Build & Release"]
     types: [completed]
-    branches: [main, feature/cd-ambientes-rollback-approvals]
+    branches: [main, develop]
 
   # Manual trigger
   workflow_dispatch:
@@ -13,10 +13,6 @@ on:
       release_tag:
         description: "Release tag to deploy (e.g., v1.0.0-develop-20260128-164500)"
         required: true
-
-permissions:
-  contents: read
-  workflows: write
 
 concurrency:
   group: deploy-staging

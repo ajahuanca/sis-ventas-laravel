@@ -138,8 +138,11 @@ jobs:
       # Create release artifact
       - name: Create Release Artifact
         run: |
-          ARTIFACT_NAME="sistema-ventas-${{ steps.version.outputs.release_name }}"
+          RAW_NAME="sistema-ventas-${{ steps.version.outputs.release_name }}"
+          ARTIFACT_NAME="$(echo "$RAW_NAME" | tr '/:' '--' | tr -cd 'A-Za-z0-9._-')"
 
+          echo "Using artifact name: $ARTIFACT_NAME"
+         
           # Create tar.gz excluding unnecessary files
           # Create tar.gz excluding unnecessary files
           tar -czf "${ARTIFACT_NAME}.tar.gz" \

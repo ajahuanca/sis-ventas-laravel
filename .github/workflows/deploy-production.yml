@@ -5,7 +5,7 @@ on:
   workflow_run:
     workflows: ["Build & Release"]
     types: [completed]
-    branches: [main, ci-dia4]
+    branches: [main, feature/cd-ambientes-rollback-approvals]
 
   # Manual trigger
   workflow_dispatch:

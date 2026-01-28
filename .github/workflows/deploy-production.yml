@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "Release tag to deploy (e.g., v1.0.0-20260114-164500)"
+        description: "Release tag to deploy (e.g., v1.0.0-20260128-164500)"
         required: true
 
 concurrency:
@@ -88,7 +88,7 @@ jobs:
           # Check if base directory exists
           if [ ! -d "${{ secrets.PROD_PATH }}" ]; then
             echo "❌ Production directory not found: ${{ secrets.PROD_PATH }}"
-            ls -ld /var/www/sistema-ventas-production 2>/dev/null || echo "Base folder /var/www/sistema-ventas-production also not found"
+            ls -ld /var/www/comprasventas-production 2>/dev/null || echo "Base folder /var/www/comprasventas-production also not found"
             exit 1
           fi
 

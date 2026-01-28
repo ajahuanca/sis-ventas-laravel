@@ -60,7 +60,7 @@ jobs:
           php artisan config:clear
 
       - name: "Gate: Security audit (Composer)"
-        run: composer audit --no-interaction --format=plain
+        run: composer audit --no-dev --no-interaction --format=plain
 
       - name: "Gate: Tests + Coverage"
         run: |

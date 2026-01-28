@@ -14,6 +14,10 @@ on:
         description: "Release tag to deploy (e.g., v1.0.0-20260128-164500)"
         required: true
 
+permissions:
+  contents: read
+  workflows: write
+
 concurrency:
   group: deploy-production
   cancel-in-progress: false

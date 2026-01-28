@@ -1,6 +1,6 @@
 # Descripción del Cambio
 
-<!-- ¿Qué hace este PR? ¿Qué problema resuelve? -->
+<!-- ¿Qué hace este PR? ¿Qué problema resuelve?  -->
 
 # Tipo de Cambio
 

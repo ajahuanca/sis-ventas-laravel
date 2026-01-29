@@ -68,16 +68,33 @@ jobs:
             echo "ℹ️ gh not found (OK for manual release_tag)"
           fi
 
-      - name: Get Release Tag (manual input)
+      - name: Get Release Tag
         id: release
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          RELEASE_TAG="${{ github.event.inputs.release_tag }}"
-          if [ -z "$RELEASE_TAG" ]; then
-            echo "❌ release_tag is required"
-            exit 1
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            RELEASE_TAG="${{ github.event.inputs.release_tag }}"
+            if [ -z "$RELEASE_TAG" ]; then
+              echo "❌ release_tag is required for manual runs"
+              exit 1
+            fi
+          else
+            # workflow_run path (no inputs)
+            command -v gh >/dev/null 2>&1 || { echo "❌ gh CLI not installed on runner"; exit 1; }
+
+            # latest non-prerelease tag
+            RELEASE_TAG="$(gh release list --limit 20 | grep -v 'Pre-release' | head -1 | awk '{print $1}' || true)"
+
+            if [ -z "$RELEASE_TAG" ]; then
+              echo "❌ No release found to deploy"
+              exit 1
+            fi
           fi
+
           echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
           echo "📦 Deploying release: ${RELEASE_TAG}"
 

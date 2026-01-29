@@ -1,18 +1,19 @@
 name: Deploy to Staging
 
 on:
-  # Trigger after successful build on develop
+  # Auto-trigger after successful Build & Release on develop
   workflow_run:
     workflows: ["Build & Release"]
     types: [completed]
-    branches: [main, develop]
+    branches: [develop]
 
-  # Manual trigger
+  # Manual trigger (recommended)
   workflow_dispatch:
     inputs:
       release_tag:
         description: "Release tag to deploy (e.g., v1.0.0-develop-20260128-164500)"
         required: true
+        type: string
 
 concurrency:
   group: deploy-staging
@@ -22,48 +23,64 @@ env:
   ENVIRONMENT: staging
   HEALTH_CHECK_TIMEOUT: 30
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   deploy:
     name: Deploy to Staging
     runs-on: ubuntu-latest
+
     if: |
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'develop')
+
+    # Configure approvals/secrets in: Settings -> Environments -> staging
     environment: staging
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Get Release Tag
-        id: release
+      - name: Validate Runner Tooling
+        shell: bash
         run: |
-          if [ -n "${{ github.event.inputs.release_tag }}" ]; then
-            RELEASE_TAG="${{ github.event.inputs.release_tag }}"
-          else
-            # Get latest release from develop
-            RELEASE_TAG=$(gh release list --limit 10 | grep -E 'develop' | head -1 | awk '{print $1}' || echo "")
-            if [ -z "$RELEASE_TAG" ]; then
-              echo "No release found for develop branch"
-              exit 1
-            fi
+          set -euo pipefail
+          echo "🔧 Validating runner tooling..."
+          for bin in bash curl; do
+            command -v "$bin" >/dev/null 2>&1 || { echo "❌ Missing binary: $bin"; exit 1; }
+          done
+          echo "✅ Runner tooling OK"
+
+      - name: Get Release Tag (manual input)
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          RELEASE_TAG="${{ github.event.inputs.release_tag }}"
+          if [ -z "$RELEASE_TAG" ]; then
+            echo "❌ release_tag is required"
+            exit 1
           fi
-          echo "release_tag=${RELEASE_TAG}" >> $GITHUB_OUTPUT
+          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
           echo "📦 Deploying release: ${RELEASE_TAG}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Display Deployment Info
+        shell: bash
         run: |
-          echo "## 🚀 Staging Deployment" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| **Release** | \`${{ steps.release.outputs.release_tag }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Environment** | staging |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Triggered by** | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          set -euo pipefail
+          echo "## 🚀 Staging Deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Property | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|----------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Release** | \`${{ steps.release.outputs.release_tag }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Environment** | staging |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Triggered by** | ${{ github.actor }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Timestamp** | $(date -Iseconds) |" >> "$GITHUB_STEP_SUMMARY"
 
-      # Pre-deploy checks via SSH
-      - name: Pre-Deploy Checks
+      # Pre-deploy checks via SSH (server validation)
+      - name: Pre-Deploy Checks (SSH)
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.STAGING_HOST }}
@@ -71,35 +88,50 @@ jobs:
           key: ${{ secrets.STAGING_SSH_KEY }}
           port: ${{ secrets.STAGING_SSH_PORT }}
           script: |
-            set -e
+            set -euo pipefail
             echo "🔍 Running pre-deploy checks..."
 
-            # Check disk space
-            AVAILABLE=$(df -BG ${{ secrets.STAGING_PATH }} | awk 'NR==2 {print $4}' | sed 's/G//')
-            if [ "$AVAILABLE" -lt 2 ]; then
+            STAGING_PATH="${{ secrets.STAGING_PATH }}"
+
+            # Ensure base path exists
+            if [ ! -d "${STAGING_PATH}" ]; then
+              echo "❌ STAGING_PATH not found: ${STAGING_PATH}"
+              exit 1
+            fi
+
+            # Required tooling on server
+            for bin in curl tar php; do
+              command -v "$bin" >/dev/null 2>&1 || { echo "❌ Missing binary on server: $bin"; exit 1; }
+            done
+
+            # Disk space
+            AVAILABLE=$(df -BG "${STAGING_PATH}" | awk 'NR==2 {print $4}' | sed 's/G//')
+            if [ "${AVAILABLE}" -lt 2 ]; then
               echo "❌ Insufficient disk space: ${AVAILABLE}GB (need 2GB)"
               exit 1
             fi
             echo "✅ Disk space: ${AVAILABLE}GB available"
 
-            # Check shared directory
-            if [ ! -d "${{ secrets.STAGING_PATH }}/shared" ]; then
-              echo "❌ Shared directory not found"
-              exit 1
-            fi
-            echo "✅ Shared directory exists"
+            # Shared + releases structure
+            mkdir -p "${STAGING_PATH}/shared/storage/app/public"
+            mkdir -p "${STAGING_PATH}/shared/storage/framework/cache/data"
+            mkdir -p "${STAGING_PATH}/shared/storage/framework/sessions"
+            mkdir -p "${STAGING_PATH}/shared/storage/framework/views"
+            mkdir -p "${STAGING_PATH}/shared/storage/logs"
+            mkdir -p "${STAGING_PATH}/shared/database/backups"
+            mkdir -p "${STAGING_PATH}/releases"
 
-            # Check .env
-            if [ ! -f "${{ secrets.STAGING_PATH }}/shared/.env" ]; then
-              echo "❌ .env file not found"
+            # .env must exist (prepared out-of-band or by another workflow)
+            if [ ! -f "${STAGING_PATH}/shared/.env" ]; then
+              echo "❌ .env file not found at ${STAGING_PATH}/shared/.env"
               exit 1
             fi
             echo "✅ .env file exists"
 
             echo "✅ All pre-deploy checks passed"
 
-      # Deploy using script
-      - name: Deploy Application
+      # Deploy via SSH (release-based + atomic symlink switch)
+      - name: Deploy Application (SSH)
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.STAGING_HOST }}
@@ -108,21 +140,23 @@ jobs:
           port: ${{ secrets.STAGING_SSH_PORT }}
           command_timeout: 10m
           script: |
-            set -e
-            cd ${{ secrets.STAGING_PATH }}
+            set -euo pipefail
+            STAGING_PATH="${{ secrets.STAGING_PATH }}"
+            cd "${STAGING_PATH}"
 
             RELEASE_TAG="${{ steps.release.outputs.release_tag }}"
-            TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+            TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
             RELEASE_DIR="releases/${TIMESTAMP}"
 
-            echo "📦 Downloading release: ${RELEASE_TAG}"
-
-            # Download artifact
             ARTIFACT_NAME="sistema-ventas-${RELEASE_TAG}"
             DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${ARTIFACT_NAME}.tar.gz"
 
+            echo "📦 Downloading release: ${RELEASE_TAG}"
             mkdir -p "/tmp/deploy-${TIMESTAMP}"
-            curl -fsSL -o "/tmp/deploy-${TIMESTAMP}/${ARTIFACT_NAME}.tar.gz" "$DOWNLOAD_URL"
+
+            # IMPORTANT: For private repos, unauthenticated curl can fail.
+            # This assumes public access to release assets OR server has network access.
+            curl -fsSL -o "/tmp/deploy-${TIMESTAMP}/${ARTIFACT_NAME}.tar.gz" "${DOWNLOAD_URL}"
 
             echo "📂 Extracting to ${RELEASE_DIR}"
             mkdir -p "${RELEASE_DIR}"
@@ -134,69 +168,105 @@ jobs:
             ln -sfn "$(pwd)/shared/.env" "${RELEASE_DIR}/.env"
 
             echo "🔒 Setting permissions"
-            sudo chown -R www-data:www-data "${RELEASE_DIR}"
-            sudo find "${RELEASE_DIR}" -type f -exec chmod 644 {} \;
-            sudo find "${RELEASE_DIR}" -type d -exec chmod 755 {} \;
-            sudo chmod -R 775 shared/storage
+            if sudo -n true 2>/dev/null; then
+              sudo chown -R www-data:www-data "${RELEASE_DIR}"
+              sudo find "${RELEASE_DIR}" -type f -exec chmod 644 {} \;
+              sudo find "${RELEASE_DIR}" -type d -exec chmod 755 {} \;
+              sudo chmod -R 775 shared/storage
+              sudo mkdir -p "${RELEASE_DIR}/bootstrap/cache"
+              sudo chmod -R 775 "${RELEASE_DIR}/bootstrap/cache"
+            else
+              echo "⚠️ sudo not available; applying best-effort perms"
+              find "${RELEASE_DIR}" -type f -exec chmod 644 {} \; || true
+              find "${RELEASE_DIR}" -type d -exec chmod 755 {} \; || true
+              chmod -R 775 shared/storage 2>/dev/null || true
+              mkdir -p "${RELEASE_DIR}/bootstrap/cache"
+              chmod -R 775 "${RELEASE_DIR}/bootstrap/cache" 2>/dev/null || true
+            fi
 
-            echo "🗃️ Creating database backup"
-            mkdir -p shared/database/backups
-            if command -v pg_dump &> /dev/null; then
+            echo "🗃️ Creating database backup (custom format .dump)"
+            if command -v pg_dump >/dev/null 2>&1; then
+              set +e
+              set -a
               source shared/.env
-              PGPASSWORD="$DB_PASSWORD" pg_dump -h "$DB_HOST" -U "$DB_USERNAME" -Fc "$DB_DATABASE" > "shared/database/backups/pre-${TIMESTAMP}.sql" 2>/dev/null || echo "Backup skipped"
+              set +a
+              PGPASSWORD="$DB_PASSWORD" pg_dump -h "$DB_HOST" -U "$DB_USERNAME" -Fc "$DB_DATABASE" \
+                > "shared/database/backups/pre-${TIMESTAMP}.dump"
+              RC=$?
+              set -e
+              if [ $RC -eq 0 ]; then
+                echo "✅ Backup saved: pre-${TIMESTAMP}.dump"
+              else
+                echo "⚠️ Backup skipped/failure (non-blocking)"
+              fi
+            else
+              echo "⚠️ pg_dump not available, skipping backup"
             fi
 
             echo "🔄 Running migrations"
             cd "${RELEASE_DIR}"
+            php artisan config:clear || true
             php artisan migrate --force
 
             echo "⚡ Atomic switch"
-            cd ${{ secrets.STAGING_PATH }}
+            cd "${STAGING_PATH}"
+
+            PREVIOUS="$(readlink -f current 2>/dev/null || echo "")"
+            if [ -n "${PREVIOUS}" ]; then
+              echo "${PREVIOUS}" > shared/.previous_release
+            fi
+
             ln -sfn "$(pwd)/${RELEASE_DIR}" current.new
             mv -Tf current.new current
 
             echo "🔃 Reloading services"
-            sudo systemctl reload php8.4-fpm || sudo systemctl reload php8.2-fpm || true
-            sudo nginx -s reload || true
-            sudo supervisorctl restart sistema-ventas-worker:* 2>/dev/null || true
+            if sudo -n true 2>/dev/null; then
+              sudo systemctl reload php8.4-fpm || sudo systemctl reload php8.2-fpm || true
+              sudo nginx -s reload || true
+              sudo supervisorctl restart sistema-ventas-worker:* 2>/dev/null || true
+            else
+              echo "⚠️ sudo not available, skipping service reload"
+            fi
 
-            echo "🧹 Cleanup"
+            echo "🧹 Cleanup temp"
             rm -rf "/tmp/deploy-${TIMESTAMP}"
 
-            # Keep only last 3 releases
+            echo "🧹 Cleanup old releases (keep last 3)"
             cd releases
             ls -t | tail -n +4 | xargs -r rm -rf
 
             echo "✅ Deployment complete"
 
-      # Health check
+      # Health check (blocking for staging)
       - name: Health Check
+        shell: bash
         run: |
+          set -euo pipefail
           echo "🏥 Running health checks..."
           sleep 5
 
           HEALTH_URL="${{ secrets.STAGING_URL }}/api/health"
-          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time ${{ env.HEALTH_CHECK_TIMEOUT }} "$HEALTH_URL" || echo "000")
-          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-          BODY=$(echo "$RESPONSE" | sed '$d')
+          RESPONSE="$(curl -sS -w '\n%{http_code}' --max-time ${{ env.HEALTH_CHECK_TIMEOUT }} "${HEALTH_URL}" || true)"
+          HTTP_CODE="$(echo "$RESPONSE" | tail -1)"
+          BODY="$(echo "$RESPONSE" | sed '$d' | head -c 1200)"
 
           echo "HTTP Status: ${HTTP_CODE}"
           echo "Response: ${BODY}"
 
           if [ "$HTTP_CODE" != "200" ]; then
             echo "❌ Health check failed!"
-            echo "## ❌ Health Check Failed" >> $GITHUB_STEP_SUMMARY
-            echo "HTTP Status: ${HTTP_CODE}" >> $GITHUB_STEP_SUMMARY
+            echo "## ❌ Health Check Failed" >> "$GITHUB_STEP_SUMMARY"
+            echo "HTTP Status: ${HTTP_CODE}" >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
 
           echo "✅ Health check passed"
-          echo "## ✅ Deployment Successful" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**URL:** ${{ secrets.STAGING_URL }}" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Deployment Successful" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**URL:** ${{ secrets.STAGING_URL }}" >> "$GITHUB_STEP_SUMMARY"
 
-      # Rollback on failure
-      - name: Rollback on Failure
+      # Rollback on failure (SSH)
+      - name: Rollback on Failure (SSH)
         if: failure()
         uses: appleboy/ssh-action@v1.2.2
         with:
@@ -205,15 +275,32 @@ jobs:
           key: ${{ secrets.STAGING_SSH_KEY }}
           port: ${{ secrets.STAGING_SSH_PORT }}
           script: |
-            cd ${{ secrets.STAGING_PATH }}
+            set -euo pipefail
+            STAGING_PATH="${{ secrets.STAGING_PATH }}"
+            cd "${STAGING_PATH}"
 
-            PREVIOUS=$(ls -t releases | sed -n '2p')
-            if [ -n "$PREVIOUS" ]; then
+            PREVIOUS=""
+            if [ -f "shared/.previous_release" ]; then
+              PREVIOUS="$(cat shared/.previous_release || true)"
+            fi
+
+            if [ -z "$PREVIOUS" ]; then
+              CANDIDATE="$(ls -t releases | sed -n '2p' || true)"
+              if [ -n "$CANDIDATE" ]; then
+                PREVIOUS="$(pwd)/releases/${CANDIDATE}"
+              fi
+            fi
+
+            if [ -n "$PREVIOUS" ] && [ -d "$PREVIOUS" ]; then
               echo "🔙 Rolling back to: ${PREVIOUS}"
-              ln -sfn "$(pwd)/releases/${PREVIOUS}" current.new
+              ln -sfn "${PREVIOUS}" current.new
               mv -Tf current.new current
-              sudo systemctl reload php8.4-fpm || sudo systemctl reload php8.2-fpm || true
-              sudo nginx -s reload || true
+
+              if sudo -n true 2>/dev/null; then
+                sudo systemctl reload php8.4-fpm || sudo systemctl reload php8.2-fpm || true
+                sudo nginx -s reload || true
+              fi
+
               echo "✅ Rollback complete"
             else
               echo "❌ No previous release to rollback to"

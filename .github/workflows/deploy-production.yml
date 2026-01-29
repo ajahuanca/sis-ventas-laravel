@@ -142,8 +142,18 @@ jobs:
           mkdir -p "${PROD_PATH}/releases"
 
           # Permissions (prefer pre-provisioned permissions; this is fallback)
+          if [ ! -w "${PROD_PATH}" ]; then
+            echo "❌ Runner user has no write permission on ${PROD_PATH}"
+            echo "➡️ Fix ownership or ACL on server before deploying"
+            exit 1
+          fi
+
+          # Now it's safe to create dirs
+          mkdir -p "${PROD_PATH}/shared" "${PROD_PATH}/releases"
+
+          # Permissions fallback (only if sudo available)
           if sudo -n true 2>/dev/null; then
-            sudo chown -R www-data:www-data "${PROD_PATH}/shared" "${PROD_PATH}/releases" || true
+            sudo chown -R www-data:www-data "${PROD_PATH}/shared" || true
           fi
 
           # Write shared .env (do not hardcode DB/user/host; use secrets)

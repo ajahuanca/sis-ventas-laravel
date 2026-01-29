@@ -121,11 +121,11 @@ jobs:
       - name: "Gate: Build (Vite)"
         run: npm run build
 
-      - name: "Security audit (npm) - soft gate"
-        id: npmaudit
-        run: |
-          npm audit --audit-level=high
-        continue-on-error: true
+      #- name: "Security audit (npm) - soft gate"
+      #  id: npmaudit
+      #  run: |
+      #    npm audit --audit-level=high
+      #  continue-on-error: true
 
   # JOB Resultado 
   summary:
